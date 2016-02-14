@@ -1,4 +1,5 @@
 import sys
+import re
 
 try:
     import urwid
@@ -41,12 +42,12 @@ class MainWindow(urwid.Frame):
         self.focus.set_focus(2)
 
     def get_caption(self):
-        return self._header.text.replace('hexvi', '').replace(' - ', '')
+        return re.sub('^hexvi( - )?', '', self._header.base_widget.get_text()[0])
     def set_caption(self, value):
         if not value:
-            self._header.text = 'hexvi'
+            self._header.base_widget.set_text('hexvi')
         else:
-            self._header.text = 'hexvi - ' + value
+            self._header.base_widget.set_text('hexvi - ' + value)
     caption = property(get_caption, set_caption)
 
     def get_columns(self):
@@ -55,13 +56,13 @@ class MainWindow(urwid.Frame):
         self._columns = value
     columns = property(get_columns, set_columns)
 
+    def _make_header(self):
+        return urwid.Text(u'hexvi')
+
     def _make_offsets(self):
         # implement me
         body = [urwid.Text('%08x' % i) for i in range(0, 100 * self.columns, self.columns)]
         return urwid.ListBox(urwid.SimpleFocusListWalker(body))
-
-    def _make_header(self):
-        return urwid.Text(u'hexvi')
 
     def _make_hex_dump(self):
         # implement me
