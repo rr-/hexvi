@@ -165,6 +165,7 @@ class Ui(object):
                 ('header', 'standout', ''),
             ],
             unhandled_input=self._key_pressed)
+        self._main_window.caption = file_buffer.path
         self._main_window.resize(self._main_loop.screen.get_cols_rows())
         self._main_loop.run()
 
