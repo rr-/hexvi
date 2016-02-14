@@ -8,10 +8,12 @@ except ImportError as e:
     print('Please install %s.' % e.name)
     sys.exit(1)
 
+from file_buffer import FileBuffer
 from readline_edit import ReadlineEdit
 
 class MainWindow(urwid.Frame):
-    def __init__(self):
+    def __init__(self, file_buffer):
+        self._file_buffer = file_buffer
         self._columns = 8 # todo: autodetect
         self._offsets = self._make_offsets()
         self._hex_dump = self._make_hex_dump()
@@ -76,7 +78,8 @@ class MainWindow(urwid.Frame):
 
 class Ui(object):
     def run(self, args):
-        main_window = MainWindow()
+        file_buffer = FileBuffer(args.file)
+        main_window = MainWindow(file_buffer)
         main_window.caption = 'bla'
         urwid.MainLoop(
             main_window,
