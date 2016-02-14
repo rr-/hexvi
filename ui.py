@@ -8,6 +8,8 @@ except ImportError as e:
     print('Please install %s.' % e.name)
     sys.exit(1)
 
+from readline_edit import ReadlineEdit
+
 class MainWindow(urwid.Frame):
     def __init__(self):
         self._columns = 8 # todo: autodetect
@@ -70,7 +72,7 @@ class MainWindow(urwid.Frame):
         return urwid.ListBox(urwid.SimpleFocusListWalker(body))
 
     def _make_console(self):
-        return urwid.Edit()
+        return ReadlineEdit()
 
 class Ui(object):
     def run(self, args):
