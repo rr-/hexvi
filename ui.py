@@ -18,7 +18,6 @@ class BaseLineWalker(urwid.ListWalker):
         self._column_count_getter = column_count_getter
         self._offset_getter = offset_getter
         self._focus = 0
-        self._lines = []
 
     def get_focus(self):
         return self._get_at_pos(self._focus)
@@ -36,13 +35,9 @@ class BaseLineWalker(urwid.ListWalker):
     def _get_at_pos(self, pos):
         if pos < 0:
             return None, None
-        if len(self._lines) > pos:
-            return self._lines[pos], pos
         if self._file_buffer is None:
             return None, None
-        assert pos == len(self._lines), "out of order request?"
-        self._lines.append(urwid.Edit(self._get_line_text(pos)))
-        return self._lines[-1], pos
+        return urwid.Edit(self._get_line_text(pos)), pos
 
     def _get_line_text(self, pos):
         raise RuntimeError('Implement me')
@@ -73,19 +68,18 @@ class MainWindow(urwid.Frame):
         self._offset = 0
 
         self._offsets = self._make_offsets()
-        self._hex_dump = self._make_hex_dump()
+        self._hex_dump = urwid.Frame(self._make_hex_dump(), urwid.Text('Hex dump'))
         self._ascii_dump = self._make_ascii_dump()
         self._console = self._make_console()
         self._header = self._make_header()
 
-        self._main_view = urwid.Frame(urwid.Columns([
+        self._main_view = urwid.Columns([
             ('fixed', 8, urwid.Frame(self._offsets, urwid.Text('Offset'))),
             ('fixed', 1, urwid.AttrMap(urwid.SolidFill(), 'filler')),
-            # todo: scaling
-            ('weight', 2, urwid.Frame(self._hex_dump, urwid.Text('Hex dump'))),
+            ('fixed', 1337, self._hex_dump),
             ('fixed', 1, urwid.AttrMap(urwid.SolidFill(), 'filler')),
-            ('weight', 1, urwid.Frame(self._ascii_dump, urwid.Text('ASCII dump'))),
-        ]))
+            ('fixed', 1337, urwid.Frame(self._ascii_dump, urwid.Text('ASCII dump'))),
+        ])
 
         urwid.Frame.__init__(
             self,
@@ -100,7 +94,10 @@ class MainWindow(urwid.Frame):
         self.focus.set_focus(2)
 
     def resize(self, new_term_size):
-        pass
+        self.column_count = (new_term_size[0] - 12) // 4
+        self._main_view.contents[2] = (self._hex_dump, ('given', self.column_count * 3, 0))
+        self._main_view.contents[4] = (self._ascii_dump, ('given', self.column_count, 0))
+        self.render(new_term_size)
 
     def get_caption(self):
         return re.sub('^hexvi( - )?', '', self._header.base_widget.get_text()[0])
