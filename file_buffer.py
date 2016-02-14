@@ -3,23 +3,19 @@ class FileBuffer(object):
         with open(path, 'rb') as fh:
             self._content = fh.read()
         self._path = path
-        self._offset = 0
 
     def get_content(self):
         return self._content
 
     def get_content_range(self, offset, size):
-        return self._content[offset, size]
+        return self._content[offset:offset+size]
 
     def get_path(self):
         return self._path
 
-    def get_offset(self):
-        return self._offset
+    def get_size(self):
+        return len(self._content)
 
-    def set_offset(self, value):
-        self._offset = value
-
+    size = property(get_size)
     path = property(get_path)
-    offset = property(get_offset, set_offset)
     content = property(get_content)
