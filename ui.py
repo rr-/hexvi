@@ -12,79 +12,80 @@ except ImportError as e:
 from file_buffer import FileBuffer
 from readline_edit import ReadlineEdit
 
-class BaseLineWalker(urwid.ListWalker):
-    def __init__(self, file_buffer, column_count_getter, offset_getter):
+class Dump(urwid.BoxWidget):
+    HEX = 'hex'
+    ASC = 'asc'
+
+    def __init__(self, file_buffer):
+        self.pane = self.HEX
         self._file_buffer = file_buffer
-        self._column_count_getter = column_count_getter
-        self._offset_getter = offset_getter
-        self._focus = 0
+        self._top_offset = 0
+        self._cur_offset = 0
 
-    def get_focus(self):
-        return self._get_at_pos(self._focus)
+    def render(self, size, focus=False):
+        maxcol, maxrow = size
+        offset_canvas = []
+        hex_canvas = []
+        asc_canvas = []
 
-    def set_focus(self, focus):
-        self._focus = focus
-        self._modified()
+        # todo: let user configure column_count
+        column_count = (maxcol - 8 - 1 - 1 - 1) // 4
 
-    def get_next(self, start_from):
-        return self._get_at_pos(start_from + 1)
+        # todo: if cursor_offset is outside view bounds, adjust _top_offset
+        # todo: add "scrolloff" configuration variable
 
-    def get_prev(self, start_from):
-        return self._get_at_pos(start_from - 1)
+        for i in range(maxrow):
+            row_offset = self._top_offset + i * column_count
+            buffer = self._file_buffer.get_content_range(row_offset, column_count)
+            offset_canvas.append(('%08x' % row_offset).encode('utf8'))
+            hex_canvas.append(''.join('%02x ' % c for c in buffer).encode('utf8'))
+            asc_canvas.append(''.join('%c' % c if c >= 32 and c < 127 else '.' for c in buffer).encode('utf8'))
 
-    def _get_at_pos(self, pos):
-        if pos < 0:
-            return None, None
-        if self._file_buffer is None:
-            return None, None
-        return urwid.Edit(self._get_line_text(pos)), pos
+        relative_cursor_offset = self._cur_offset - self._top_offset
 
-    def _get_line_text(self, pos):
-        raise RuntimeError('Implement me')
+        canvas_def = []
+        Dump.pos = 0
+        def append(widget, width, is_focused):
+            canvas_def.append((widget, Dump.pos, False, width))
+            Dump.pos += width
+        append(urwid.TextCanvas(offset_canvas), 9, False)
+        if self.pane == self.HEX:
+            cursor_pos = (
+                (relative_cursor_offset * 3) // column_count,
+                (relative_cursor_offset * 3) % column_count)
+            append(urwid.TextCanvas(hex_canvas, cursor=cursor_pos), column_count * 3, True)
+            append(urwid.TextCanvas(asc_canvas), column_count, False)
+        else:
+            cursor_pos = (
+                (relative_cursor_offset * 1) // column_count,
+                (relative_cursor_offset * 1) % column_count)
+            append(urwid.TextCanvas(hex_canvas), column_count * 3, False)
+            append(urwid.TextCanvas(asc_canvas, cursor=cursor_pos), column_count, True)
 
-# todo: these three classes almost certainly need to be merged into one custom widget
-# to make scroll synchronization etc. sane
-class OffsetLineWalker(BaseLineWalker):
-    def _get_line_text(self, pos):
-        offset = pos * self._column_count_getter()
-        return '%08x' % offset if offset < self._file_buffer.size else ''
-class HexDumpLineWalker(BaseLineWalker):
-    def _get_line_text(self, pos):
-        column_count = self._column_count_getter()
-        offset_start = pos * column_count
-        buffer = self._file_buffer.get_content_range(offset_start, column_count)
-        return ''.join('%02x ' % c for c in buffer)
-class AsciiDumpLineWalker(BaseLineWalker):
-    def _get_line_text(self, pos):
-        column_count = self._column_count_getter()
-        offset_start = pos * column_count
-        buffer = self._file_buffer.get_content_range(offset_start, column_count)
-        return ''.join('%c' % c if c >= 32 and c < 127 else '.' for c in buffer)
+        multi_canvas = urwid.CanvasJoin(canvas_def)
+        if multi_canvas.cols() < maxcol:
+            multi_canvas.pad_trim_left_right(0, maxcol - multi_canvas.cols())
+        return multi_canvas
+
+    def keypress(self, pos, key):
+        if key == 'tab':
+            self.pane = self.HEX if self.pane == self.ASC else self.ASC
+            self._invalidate()
+            return None
+        return key
 
 class MainWindow(urwid.Frame):
     def __init__(self, file_buffer):
         self._file_buffer = file_buffer
-        self._column_count = 8 # todo: autodetect
-        self._offset = 0
 
-        self._offsets = self._make_offsets()
-        self._hex_dump = urwid.Frame(self._make_hex_dump(), urwid.Text('Hex dump'))
-        self._ascii_dump = self._make_ascii_dump()
+        self._dump = self._make_dump()
         self._console = self._make_console()
         self._header = self._make_header()
-
-        self._main_view = urwid.Columns([
-            ('fixed', 8, urwid.Frame(self._offsets, urwid.Text('Offset'))),
-            ('fixed', 1, urwid.AttrMap(urwid.SolidFill(), 'filler')),
-            ('fixed', 1337, self._hex_dump),
-            ('fixed', 1, urwid.AttrMap(urwid.SolidFill(), 'filler')),
-            ('fixed', 1337, urwid.Frame(self._ascii_dump, urwid.Text('ASCII dump'))),
-        ])
 
         urwid.Frame.__init__(
             self,
             urwid.Pile([
-                self._main_view,
+                self._dump,
                 ('fixed', 1, urwid.AttrMap(urwid.SolidFill(), 'header')),
                 ('fixed', 1, urwid.Filler(self._console)),
             ]),
@@ -94,10 +95,7 @@ class MainWindow(urwid.Frame):
         self.focus.set_focus(2)
 
     def resize(self, new_term_size):
-        self.column_count = (new_term_size[0] - 12) // 4
-        self._main_view.contents[2] = (self._hex_dump, ('given', self.column_count * 3, 0))
-        self._main_view.contents[4] = (self._ascii_dump, ('given', self.column_count, 0))
-        self.render(new_term_size)
+        pass
 
     def get_caption(self):
         return re.sub('^hexvi( - )?', '', self._header.base_widget.get_text()[0])
@@ -108,38 +106,11 @@ class MainWindow(urwid.Frame):
             self._header.base_widget.set_text('hexvi - ' + value)
     caption = property(get_caption, set_caption)
 
-    def get_offset(self):
-        return self._offset
-    def set_offset(self, value):
-        self._offset = value
-    offset = property(get_offset, set_offset)
-
-    def get_column_count(self):
-        return self._column_count
-    def set_column_count(self, value):
-        self._column_count = value
-    column_count = property(get_column_count, set_column_count)
-
     def _make_header(self):
         return urwid.Text(u'hexvi')
 
-    def _make_offsets(self):
-        return urwid.ListBox(OffsetLineWalker(
-            self._file_buffer,
-            lambda: self.column_count,
-            lambda: self.offset))
-
-    def _make_hex_dump(self):
-        return urwid.ListBox(HexDumpLineWalker(
-            self._file_buffer,
-            lambda: self.column_count,
-            lambda: self.offset))
-
-    def _make_ascii_dump(self):
-        return urwid.ListBox(AsciiDumpLineWalker(
-            self._file_buffer,
-            lambda: self.column_count,
-            lambda: self.offset))
+    def _make_dump(self):
+        return Dump(self._file_buffer)
 
     def _make_console(self):
         return ReadlineEdit()
