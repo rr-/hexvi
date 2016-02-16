@@ -94,9 +94,6 @@ class MainWindow(urwid.Frame):
         # focus the command line
         self.focus.set_focus(2)
 
-    def resize(self, new_term_size):
-        pass
-
     def get_caption(self):
         return re.sub('^hexvi( - )?', '', self._header.base_widget.get_text()[0])
     def set_caption(self, value):
@@ -115,30 +112,19 @@ class MainWindow(urwid.Frame):
     def _make_console(self):
         return ReadlineEdit()
 
-class CustomMainLoop(urwid.MainLoop):
-    def process_input(self, keys):
-        for k in keys:
-            if k == 'window resize':
-                return self.unhandled_input(k)
-        return super().process_input(keys)
-
 class Ui(object):
     def run(self, args):
         file_buffer = FileBuffer(args.file)
         self._main_window = MainWindow(file_buffer)
-        self._main_loop = CustomMainLoop(
+        self._main_window.caption = file_buffer.path
+        urwid.MainLoop(
             self._main_window,
             palette=[
                 ('selected', 'light red', ''),
                 ('header', 'standout', ''),
             ],
-            unhandled_input=self._key_pressed)
-        self._main_window.caption = file_buffer.path
-        self._main_window.resize(self._main_loop.screen.get_cols_rows())
-        self._main_loop.run()
+            unhandled_input=self._key_pressed).run()
 
     def _key_pressed(self, key):
         if key == 'ctrl q':
             raise urwid.ExitMainLoop()
-        if key == 'window resize':
-            self._main_window.resize(self._main_loop.screen.get_cols_rows())
