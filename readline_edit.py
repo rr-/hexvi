@@ -3,7 +3,7 @@ import urwid
 
 class ReadlineEdit(urwid.Edit):
     def __init__(self, *args, **kwargs):
-        urwid.Edit.__init__(self, *args, **kwargs, multiline=False)
+        urwid.Edit.__init__(self, *args, multiline=False, **kwargs)
 
     def keypress(self, pos, key):
         if key == 'ctrl b': return self.move_to_prev_char()
