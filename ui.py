@@ -24,8 +24,7 @@ class Dump(BindingMixin, urwid.BoxWidget):
         self._file_buffer = file_buffer
         self._top_offset = 0
         self._cur_offset = 0
-        self._width = 0
-        self._height = 0
+        self._size = (0, 0)
 
         self.bind(['tab'], self.toggle_panes)
         self.bind(['h'], lambda: self.advance_offset_by_char(-1))
@@ -58,20 +57,15 @@ class Dump(BindingMixin, urwid.BoxWidget):
         self._top_offset = max(0, min(self._file_buffer.size, value))
 
     def get_bottom_offset(self):
-        return self.top_offset + self._height * self.visible_columns
+        return self.top_offset + self._size[1] * self.visible_columns
 
     def get_visible_columns(self):
         # todo: let user override this in the configuration
-        return (self._width - 8 - 1 - 1 - 1) // 4
+        return (self._size[0] - 8 - 1 - 1 - 1) // 4
 
     def render(self, size, focus=False):
-        maxcol, maxrow = size
-        offset_canvas = []
-        hex_canvas = []
-        asc_canvas = []
-
-        self._width = maxcol
-        self._height = maxrow
+        self._size = size
+        width, height = size
 
         # todo: add "scrolloff" configuration variable
         if self.cur_offset < self.top_offset:
@@ -79,7 +73,10 @@ class Dump(BindingMixin, urwid.BoxWidget):
         elif self.cur_offset >= self.bottom_offset:
             self.top_offset += self.visible_columns * ((self.cur_offset - self.bottom_offset) // self.visible_columns + 1)
 
-        for i in range(maxrow):
+        offset_canvas = []
+        hex_canvas = []
+        asc_canvas = []
+        for i in range(height):
             row_offset = self.top_offset + i * self.visible_columns
             buffer = self._file_buffer.get_content_range(row_offset, self.visible_columns)
             offset_canvas.append(('%08x' % row_offset).encode('utf8'))
@@ -110,8 +107,8 @@ class Dump(BindingMixin, urwid.BoxWidget):
             append(urwid.TextCanvas(asc_canvas, cursor=cursor_pos), self.visible_columns, True)
 
         multi_canvas = urwid.CanvasJoin(canvas_def)
-        if multi_canvas.cols() < maxcol:
-            multi_canvas.pad_trim_left_right(0, maxcol - multi_canvas.cols())
+        if multi_canvas.cols() < width:
+            multi_canvas.pad_trim_left_right(0, width - multi_canvas.cols())
         return multi_canvas
 
     def advance_offset_by_char(self, how_much):
@@ -154,11 +151,7 @@ class MainWindow(urwid.Frame):
     def get_caption(self):
         return re.sub('^hexvi( - )?', '', self._header.base_widget.get_text()[0])
     def set_caption(self, value):
-        if not value:
-            self._header.base_widget.set_text('hexvi')
-        else:
-            self._header.base_widget.set_text('hexvi - ' + value)
-    caption = property(get_caption, set_caption)
+        self._header.base_widget.set_text('hexvi' if not value else 'hexvi - ' + value)
 
     def _make_header(self):
         return urwid.Text(u'hexvi')
@@ -168,6 +161,8 @@ class MainWindow(urwid.Frame):
 
     def _make_console(self):
         return ReadlineEdit()
+
+    caption = property(get_caption, set_caption)
 
 class Ui(object):
     def run(self, args):
