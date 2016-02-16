@@ -24,7 +24,8 @@ class Dump(BindingMixin, urwid.BoxWidget):
         self._file_buffer = file_buffer
         self._top_offset = 0
         self._cur_offset = 0
-        self._visible_columns = 0
+        self._width = 0
+        self._height = 0
 
         self.bind(['tab'], self.toggle_panes)
         self.bind(['h'], lambda: self.advance_offset_by_char(-1))
@@ -44,16 +45,24 @@ class Dump(BindingMixin, urwid.BoxWidget):
         self.bind(['<number>', 'up'], lambda i: self.advance_offset_by_line(-i))
         self.bind(['<number>', 'right'], lambda i: self.advance_offset_by_char(i))
 
-    def get_offset(self):
+    def get_cur_offset(self):
         return self._cur_offset
 
-    def set_offset(self, value):
-        if value < 0:
-            self._cur_offset = 0
-        elif value > self._file_buffer.size:
-            self._cur_offset = self._file_buffer.size
-        else:
-            self._cur_offset = value
+    def set_cur_offset(self, value):
+        self._cur_offset = max(0, min(self._file_buffer.size, value))
+
+    def get_top_offset(self):
+        return self._top_offset
+
+    def set_top_offset(self, value):
+        self._top_offset = max(0, min(self._file_buffer.size, value))
+
+    def get_bottom_offset(self):
+        return self.top_offset + self._height * self.visible_columns
+
+    def get_visible_columns(self):
+        # todo: let user override this in the configuration
+        return (self._width - 8 - 1 - 1 - 1) // 4
 
     def render(self, size, focus=False):
         maxcol, maxrow = size
@@ -61,39 +70,44 @@ class Dump(BindingMixin, urwid.BoxWidget):
         hex_canvas = []
         asc_canvas = []
 
-        # todo: let user configure this
-        self._visible_columns = (maxcol - 8 - 1 - 1 - 1) // 4
+        self._width = maxcol
+        self._height = maxrow
 
-        # todo: if cursor_offset is outside view bounds, adjust _top_offset
         # todo: add "scrolloff" configuration variable
+        if self.cur_offset < self.top_offset:
+            self.top_offset -= self.visible_columns * (self.top_offset - self.cur_offset) // self.visible_columns
+        elif self.cur_offset >= self.bottom_offset:
+            self.top_offset += self.visible_columns * ((self.cur_offset - self.bottom_offset) // self.visible_columns + 1)
 
         for i in range(maxrow):
-            row_offset = self._top_offset + i * self._visible_columns
-            buffer = self._file_buffer.get_content_range(row_offset, self._visible_columns)
+            row_offset = self.top_offset + i * self.visible_columns
+            buffer = self._file_buffer.get_content_range(row_offset, self.visible_columns)
             offset_canvas.append(('%08x' % row_offset).encode('utf8'))
             hex_canvas.append(''.join('%02x ' % c for c in buffer).encode('utf8'))
             asc_canvas.append(''.join('%c' % c if c >= 32 and c < 127 else '.' for c in buffer).encode('utf8'))
 
-        relative_cursor_offset = self.offset - self._top_offset
+        relative_cursor_offset = self.cur_offset - self.top_offset
 
         canvas_def = []
         Dump.pos = 0
         def append(widget, width, is_focused):
             canvas_def.append((widget, Dump.pos, False, width))
             Dump.pos += width
+
         append(urwid.TextCanvas(offset_canvas), 9, False)
+
         if self.pane == self.HEX:
             cursor_pos = (
-                (relative_cursor_offset % self._visible_columns) * 3,
-                relative_cursor_offset // self._visible_columns)
-            append(urwid.TextCanvas(hex_canvas, cursor=cursor_pos), self._visible_columns * 3, True)
-            append(urwid.TextCanvas(asc_canvas), self._visible_columns, False)
+                (relative_cursor_offset % self.visible_columns) * 3,
+                relative_cursor_offset // self.visible_columns)
+            append(urwid.TextCanvas(hex_canvas, cursor=cursor_pos), self.visible_columns * 3, True)
+            append(urwid.TextCanvas(asc_canvas), self.visible_columns, False)
         else:
             cursor_pos = (
-                relative_cursor_offset % self._visible_columns,
-                relative_cursor_offset // self._visible_columns)
-            append(urwid.TextCanvas(hex_canvas), self._visible_columns * 3, False)
-            append(urwid.TextCanvas(asc_canvas, cursor=cursor_pos), self._visible_columns, True)
+                relative_cursor_offset % self.visible_columns,
+                relative_cursor_offset // self.visible_columns)
+            append(urwid.TextCanvas(hex_canvas), self.visible_columns * 3, False)
+            append(urwid.TextCanvas(asc_canvas, cursor=cursor_pos), self.visible_columns, True)
 
         multi_canvas = urwid.CanvasJoin(canvas_def)
         if multi_canvas.cols() < maxcol:
@@ -101,18 +115,21 @@ class Dump(BindingMixin, urwid.BoxWidget):
         return multi_canvas
 
     def advance_offset_by_char(self, how_much):
-        self.offset += how_much
+        self.cur_offset += how_much
         self._invalidate()
 
     def advance_offset_by_line(self, how_much):
-        self.offset += how_much * self._visible_columns
+        self.cur_offset += how_much * self.visible_columns
         self._invalidate()
 
     def toggle_panes(self):
         self.pane = self.HEX if self.pane == self.ASC else self.ASC
         self._invalidate()
 
-    offset = property(get_offset, set_offset)
+    cur_offset = property(get_cur_offset, set_cur_offset)
+    top_offset = property(get_top_offset, set_top_offset)
+    bottom_offset = property(get_bottom_offset)
+    visible_columns = property(get_visible_columns)
 
 class MainWindow(urwid.Frame):
     def __init__(self, file_buffer):
