@@ -77,11 +77,13 @@ class Dump(urwid.BoxWidget):
         self._size = size
         width, height = size
 
-        # todo: add "scrolloff" configuration variable
-        if self.cur_offset < self.top_offset:
-            self.top_offset -= self.visible_columns * ((self.top_offset - self.cur_offset) // self.visible_columns + 1)
-        elif self.cur_offset >= self.bottom_offset:
-            self.top_offset += self.visible_columns * ((self.cur_offset - self.bottom_offset) // self.visible_columns + 1)
+        # todo: let user override this in the configuration
+        scrolloff = 0
+        scrolloff = max(0, scrolloff) + 1
+        if self.cur_offset < self.top_offset + (scrolloff - 1) * self.visible_columns:
+            self.top_offset -= self.visible_columns * ((self.top_offset - self.cur_offset - 1) // self.visible_columns + scrolloff)
+        elif self.cur_offset >= self.bottom_offset - (scrolloff - 1) * self.visible_columns:
+            self.top_offset += self.visible_columns * ((self.cur_offset - self.bottom_offset) // self.visible_columns + scrolloff)
 
         offset_canvas = []
         hex_canvas = []
