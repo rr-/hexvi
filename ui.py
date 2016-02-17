@@ -77,7 +77,7 @@ class Dump(urwid.BoxWidget):
 
         # todo: add "scrolloff" configuration variable
         if self.cur_offset < self.top_offset:
-            self.top_offset -= self.visible_columns * (self.top_offset - self.cur_offset) // self.visible_columns
+            self.top_offset -= self.visible_columns * ((self.top_offset - self.cur_offset) // self.visible_columns + 1)
         elif self.cur_offset >= self.bottom_offset:
             self.top_offset += self.visible_columns * ((self.cur_offset - self.bottom_offset) // self.visible_columns + 1)
 
