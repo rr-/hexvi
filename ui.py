@@ -46,6 +46,8 @@ class Dump(urwid.BoxWidget):
         b.add(['g', 'g'], lambda: self.go_to_offset(0))
         b.add(['<hex>', 'G'], lambda i: self.go_to_offset(i))
         b.add(['G'], lambda: self.go_to_offset(self._file_buffer.size))
+        b.add(['^'], self.go_to_start_of_line)
+        b.add(['$'], self.go_to_end_of_line)
         b.compile()
         self.binding_collection = b
 
@@ -132,6 +134,14 @@ class Dump(urwid.BoxWidget):
 
     def go_to_offset(self, offset):
         self.cur_offset = offset
+        self._invalidate()
+
+    def go_to_start_of_line(self):
+        self.cur_offset -= self.cur_offset % self.visible_columns
+        self._invalidate()
+
+    def go_to_end_of_line(self):
+        self.cur_offset += self.visible_columns - 1 - self.cur_offset % self.visible_columns
         self._invalidate()
 
     def toggle_panes(self):
