@@ -78,6 +78,7 @@ class BindingCollection(object):
     def __init__(self):
         arg_bindings = [
             ArgumentBinding('<number>', list('0123456789'), lambda x: int(x), loop=True),
+            ArgumentBinding('<hex>', list('0123456789abcdefABCDEF'), lambda x: int(x, 16), loop=True),
         ]
         self._arg_bindings = {b.name: b for b in arg_bindings}
         self._nfa = NFA()

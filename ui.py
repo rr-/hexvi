@@ -43,6 +43,9 @@ class Dump(urwid.BoxWidget):
         b.add(['<number>', 'down'], lambda i: self.advance_offset_by_line(i))
         b.add(['<number>', 'up'], lambda i: self.advance_offset_by_line(-i))
         b.add(['<number>', 'right'], lambda i: self.advance_offset_by_char(i))
+        b.add(['g', 'g'], lambda: self.go_to_offset(0))
+        b.add(['<hex>', 'G'], lambda i: self.go_to_offset(i))
+        b.add(['G'], lambda: self.go_to_offset(self._file_buffer.size))
         b.compile()
         self.binding_collection = b
 
@@ -125,6 +128,10 @@ class Dump(urwid.BoxWidget):
 
     def advance_offset_by_line(self, how_much):
         self.cur_offset += how_much * self.visible_columns
+        self._invalidate()
+
+    def go_to_offset(self, offset):
+        self.cur_offset = offset
         self._invalidate()
 
     def toggle_panes(self):
