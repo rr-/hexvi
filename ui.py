@@ -9,16 +9,15 @@ except ImportError as e:
     print('Please install %s.' % e.name)
     sys.exit(1)
 
-from bindings import BindingMixin
+from bindings import BindingCollection
 from file_buffer import FileBuffer
 from readline_edit import ReadlineEdit
 
-class Dump(BindingMixin, urwid.BoxWidget):
+class Dump(urwid.BoxWidget):
     HEX = 'hex'
     ASC = 'asc'
 
     def __init__(self, file_buffer):
-        BindingMixin.__init__(self)
 
         self.pane = self.HEX
         self._file_buffer = file_buffer
@@ -26,23 +25,29 @@ class Dump(BindingMixin, urwid.BoxWidget):
         self._cur_offset = 0
         self._size = (0, 0)
 
-        self.bind(['tab'], self.toggle_panes)
-        self.bind(['h'], lambda: self.advance_offset_by_char(-1))
-        self.bind(['j'], lambda: self.advance_offset_by_line(1))
-        self.bind(['k'], lambda: self.advance_offset_by_line(-1))
-        self.bind(['l'], lambda: self.advance_offset_by_char(1))
-        self.bind(['<number>', 'h'], lambda i: self.advance_offset_by_char(-i))
-        self.bind(['<number>', 'j'], lambda i: self.advance_offset_by_line(i))
-        self.bind(['<number>', 'k'], lambda i: self.advance_offset_by_line(-i))
-        self.bind(['<number>', 'l'], lambda i: self.advance_offset_by_char(i))
-        self.bind(['left'], lambda: self.advance_offset_by_char(-1))
-        self.bind(['down'], lambda: self.advance_offset_by_line(1))
-        self.bind(['up'], lambda: self.advance_offset_by_line(-1))
-        self.bind(['right'], lambda: self.advance_offset_by_char(1))
-        self.bind(['<number>', 'left'], lambda i: self.advance_offset_by_char(-i))
-        self.bind(['<number>', 'down'], lambda i: self.advance_offset_by_line(i))
-        self.bind(['<number>', 'up'], lambda i: self.advance_offset_by_line(-i))
-        self.bind(['<number>', 'right'], lambda i: self.advance_offset_by_char(i))
+        b = BindingCollection()
+        b.add(['tab'], self.toggle_panes)
+        b.add(['h'], lambda: self.advance_offset_by_char(-1))
+        b.add(['j'], lambda: self.advance_offset_by_line(1))
+        b.add(['k'], lambda: self.advance_offset_by_line(-1))
+        b.add(['l'], lambda: self.advance_offset_by_char(1))
+        b.add(['<number>', 'h'], lambda i: self.advance_offset_by_char(-i))
+        b.add(['<number>', 'j'], lambda i: self.advance_offset_by_line(i))
+        b.add(['<number>', 'k'], lambda i: self.advance_offset_by_line(-i))
+        b.add(['<number>', 'l'], lambda i: self.advance_offset_by_char(i))
+        b.add(['left'], lambda: self.advance_offset_by_char(-1))
+        b.add(['down'], lambda: self.advance_offset_by_line(1))
+        b.add(['up'], lambda: self.advance_offset_by_line(-1))
+        b.add(['right'], lambda: self.advance_offset_by_char(1))
+        b.add(['<number>', 'left'], lambda i: self.advance_offset_by_char(-i))
+        b.add(['<number>', 'down'], lambda i: self.advance_offset_by_line(i))
+        b.add(['<number>', 'up'], lambda i: self.advance_offset_by_line(-i))
+        b.add(['<number>', 'right'], lambda i: self.advance_offset_by_char(i))
+        b.compile()
+        self.binding_collection = b
+
+    def keypress(self, pos, key):
+        return self.binding_collection.keypress(key)
 
     def get_cur_offset(self):
         return self._cur_offset
@@ -110,6 +115,9 @@ class Dump(BindingMixin, urwid.BoxWidget):
         if multi_canvas.cols() < width:
             multi_canvas.pad_trim_left_right(0, width - multi_canvas.cols())
         return multi_canvas
+
+    def keypress(self, pos, key):
+        return self.binding_collection.keypress(key)
 
     def advance_offset_by_char(self, how_much):
         self.cur_offset += how_much
