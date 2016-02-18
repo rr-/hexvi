@@ -79,7 +79,7 @@ class BindingCollection(object):
     def __init__(self):
         arg_bindings = [
             ArgumentBinding(
-                '<number>',
+                '<dec>',
                 list('0123456789'),
                 lambda x: int(x),
                 loop=True),
