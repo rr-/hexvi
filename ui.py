@@ -1,124 +1,44 @@
 import sys
 import re
+from app_state import AppState, WindowSizeChangeEvent, ModeChangeEvent
+from file_state import PaneChangeEvent, OffsetChangeEvent
+from readline_edit import ReadlineEdit
 
 try:
     import urwid
+    import zope.event.classhandler
 except ImportError as e:
     if e.name is None:
         raise
     print('Please install %s.' % e.name)
     sys.exit(1)
 
-from bindings import BindingCollection
-from app_state import AppState
-from readline_edit import ReadlineEdit
-
 class Dump(urwid.BoxWidget):
-    PANE_HEX = 'hex'
-    PANE_ASC = 'asc'
-
-    def __init__(self, main_window, file_buffer):
-
-        self._pane = self.PANE_HEX
-        self._file_buffer = file_buffer
-        self._top_offset = 0
-        self._cur_offset = 0
-        self._size = (0, 0)
-
-        b = BindingCollection()
-        b.add(['tab'], self.toggle_panes)
-        for k in ['h', 'right']: b.add([k], lambda: self.move_cur_offset_by_char(-1))
-        for k in ['j', 'down']:  b.add([k], lambda: self.move_cur_offset_by_line(1))
-        for k in ['k', 'up']:    b.add([k], lambda: self.move_cur_offset_by_line(-1))
-        for k in ['l', 'right']: b.add([k], lambda: self.move_cur_offset_by_char(1))
-        for k in ['h', 'right']: b.add(['<dec>', k], lambda i: self.move_cur_offset_by_char(-i))
-        for k in ['j', 'down']:  b.add(['<dec>', k], lambda i: self.move_cur_offset_by_line(i))
-        for k in ['k', 'up']:    b.add(['<dec>', k], lambda i: self.move_cur_offset_by_line(-i))
-        for k in ['l', 'right']: b.add(['<dec>', k], lambda i: self.move_cur_offset_by_char(i))
-        b.add(['g', 'g'], lambda: self.set_cur_offset(0))
-        b.add(['<hex>', 'G'], lambda i: self.set_cur_offset(i))
-        b.add(['G'], lambda: self.set_cur_offset(self._file_buffer.size))
-        b.add(['^'], self.move_cur_offset_to_start_of_line)
-        b.add(['$'], self.move_cur_offset_to_end_of_line)
-        b.add([':'], lambda: main_window.set_mode(AppState.MODE_COMMAND))
-        b.compile()
-        self.bindings = b
-
-    def keypress(self, pos, key):
-        if self.bindings.keypress(key):
-            return None
-        return key
-
-    def get_pane(self):
-        return self._pane
-
-    def set_pane(self, value):
-        self._pane = value
-        self._invalidate()
-
-    def toggle_panes(self):
-        self.pane = [self.PANE_HEX, self.PANE_ASC][self.pane == self.PANE_HEX]
-
-    def get_cur_offset(self):
-        return self._cur_offset
-
-    def set_cur_offset(self, value):
-        self._cur_offset = max(0, min(self._file_buffer.size, value))
-        self._invalidate()
-
-    def move_cur_offset_by_char(self, how_much):
-        self.cur_offset += how_much
-
-    def move_cur_offset_by_line(self, how_much):
-        self.cur_offset += how_much * self.visible_columns
-
-    def move_cur_offset_to_start_of_line(self):
-        self.cur_offset -= self.cur_offset % self.visible_columns
-
-    def move_cur_offset_to_end_of_line(self):
-        self.cur_offset += self.visible_columns - 1 - self.cur_offset % self.visible_columns
-
-    def get_top_offset(self):
-        return self._top_offset
-
-    def set_top_offset(self, value):
-        self._top_offset = max(0, min(self._file_buffer.size, value))
-        self._invalidate()
-
-    def get_bottom_offset(self):
-        return self.top_offset + self._size[1] * self.visible_columns
-
-    def get_visible_columns(self):
-        # todo: let user override this in the configuration
-        return (self._size[0] - 8 - 1 - 1 - 1) // 4
+    def __init__(self, app_state, file_state):
+        self._app_state = app_state
+        self._file_state = file_state
+        zope.event.classhandler.handler(PaneChangeEvent, lambda *args: self._invalidate())
+        zope.event.classhandler.handler(OffsetChangeEvent, lambda *args: self._invalidate())
 
     def render(self, size, focus=False):
-        self._size = size
+        self._app_state.window_size = size
         width, height = size
-
-        # todo: let user override this in the configuration
-        scrolloff = 0
-        scrolloff = max(0, scrolloff) + 1
-        if self.top_offset + (scrolloff - 1) * self.visible_columns > self.cur_offset:
-            self.top_offset -= self.visible_columns * ((self.top_offset - self.cur_offset - 1) // self.visible_columns + scrolloff)
-        elif self.cur_offset >= self.bottom_offset - (scrolloff - 1) * self.visible_columns:
-            self.top_offset += self.visible_columns * ((self.cur_offset - self.bottom_offset) // self.visible_columns + scrolloff)
 
         off_lines = []
         hex_lines = []
         asc_lines = []
         for i in range(height):
-            row_offset = self.top_offset + i * self.visible_columns
-            buffer = self._file_buffer.get_content_range(row_offset, self.visible_columns)
+            row_offset = self._file_state.top_offset + i * self._file_state.visible_columns
+            buffer = self._file_state.file_buffer.get_content_range(row_offset, self._file_state.visible_columns)
             off_lines.append((b'%08x' % row_offset))
             hex_lines.append(b''.join(b'%02x ' % c for c in buffer))
             asc_lines.append(b''.join(b'%c' % c if c >= 32 and c < 127 else b'.' for c in buffer))
 
-        relative_cursor_offset = self.cur_offset - self.top_offset
+        relative_cursor_offset = self._file_state.cur_offset - self._file_state.top_offset
         cursor_pos = (
-            relative_cursor_offset % self.visible_columns,
-            relative_cursor_offset // self.visible_columns)
-        if self.pane == self.PANE_HEX:
+            relative_cursor_offset % self._file_state.visible_columns,
+            relative_cursor_offset // self._file_state.visible_columns)
+        if self._file_state.pane == self._file_state.PANE_HEX:
             cursor_pos = (cursor_pos[0] * 3, cursor_pos[1])
 
         canvas_def = []
@@ -127,37 +47,27 @@ class Dump(urwid.BoxWidget):
             canvas_def.append((widget, Dump.pos, False, width))
             Dump.pos += width
         append(urwid.TextCanvas(off_lines), 9, False)
-        append(urwid.TextCanvas(hex_lines), self.visible_columns * 3, True)
-        append(urwid.TextCanvas(asc_lines), self.visible_columns, False)
+        append(urwid.TextCanvas(hex_lines), self._file_state.visible_columns * 3, True)
+        append(urwid.TextCanvas(asc_lines), self._file_state.visible_columns, False)
 
-        canvas_def[[1, 2][self.pane == self.PANE_ASC]][0].cursor = cursor_pos
+        canvas_def[[1, 2][self._file_state.pane == self._file_state.PANE_ASC]][0].cursor = cursor_pos
 
         multi_canvas = urwid.CanvasJoin(canvas_def)
         if multi_canvas.cols() < width:
             multi_canvas.pad_trim_left_right(0, width - multi_canvas.cols())
         return multi_canvas
 
-    cur_offset = property(get_cur_offset, set_cur_offset)
-    top_offset = property(get_top_offset, set_top_offset)
-    pane = property(get_pane, set_pane)
-    bottom_offset = property(get_bottom_offset)
-    visible_columns = property(get_visible_columns)
+    def keypress(self, pos, key):
+        return key
 
 class Console(ReadlineEdit):
-    def __init__(self, main_window, *args, **kwargs):
+    def __init__(self, app_state, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self._main_window = main_window
-
-        b = BindingCollection()
-        b.add(['esc'], lambda: main_window.set_mode(AppState.MODE_NORMAL))
-        b.compile()
-        self.bindings = b
+        self._app_state = app_state
 
     def keypress(self, pos, key):
-        if key == 'backspace' and not self.edit_text:
-            self._main_window.set_mode(AppState.MODE_NORMAL)
-        if self.bindings.keypress(key):
+        if (key == 'backspace' and not self.edit_text) or key == 'esc':
+            self._app_state.mode = AppState.MODE_NORMAL
             return None
         return super().keypress(pos, key)
 
@@ -186,7 +96,7 @@ class MainWindow(urwid.Frame):
             ]),
             urwid.AttrMap(self._header, 'header'))
 
-        self.set_mode(AppState.MODE_NORMAL)
+        zope.event.classhandler.handler(ModeChangeEvent, self._mode_changed)
 
     def get_caption(self):
         return re.sub('^hexvi( - )?', '', self._header.base_widget.get_text()[0])
@@ -194,12 +104,11 @@ class MainWindow(urwid.Frame):
     def set_caption(self, value):
         self._header.base_widget.set_text('hexvi' if not value else 'hexvi - ' + value)
 
-    def set_mode(self, new_mode):
-        self._app_state.mode = new_mode
-        if new_mode == AppState.MODE_COMMAND:
+    def _mode_changed(self, evt):
+        if evt.mode == AppState.MODE_COMMAND:
             self._console.prompt = ':'
             self.focus.set_focus(2)
-        elif new_mode == AppState.MODE_NORMAL:
+        elif evt.mode == AppState.MODE_NORMAL:
             self._console.edit_text = ''
             self._console.prompt = ''
             self.focus.set_focus(0)
@@ -208,18 +117,24 @@ class MainWindow(urwid.Frame):
         return urwid.Text(u'hexvi')
 
     def _make_dump(self):
-        return Dump(self, self._app_state.file_buffer)
+        return Dump(self._app_state, self._app_state.cur_file)
 
     def _make_console(self):
-        return Console(self)
+        return Console(self._app_state)
 
     caption = property(get_caption, set_caption)
 
 class Ui(object):
     def run(self, args):
-        app_state = AppState(args)
-        self._main_window = MainWindow(app_state)
-        self._main_window.caption = app_state.file_buffer.path
+        self._app_state = AppState(args)
+
+        self._main_window = MainWindow(self._app_state)
+
+        self._app_state.mode = AppState.MODE_NORMAL
+
+        # todo: subscribe to changes of app_sate.cur_file
+        self._main_window.caption = self._app_state.cur_file.file_buffer.path
+
         urwid.MainLoop(
             self._main_window,
             palette=[
@@ -231,3 +146,4 @@ class Ui(object):
     def _key_pressed(self, key):
         if key == 'ctrl q':
             raise urwid.ExitMainLoop()
+        self._app_state.keypress(key)
