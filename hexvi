@@ -5,7 +5,7 @@ from ui import Ui
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='hexvi - Vim-inspired hex editor.')
+        description='hexvi - a hex editor inspired by Vim.')
     parser.add_argument(metavar='FILE', dest='file',
         help='file to edit')
     return parser.parse_args()
