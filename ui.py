@@ -10,14 +10,14 @@ except ImportError as e:
     sys.exit(1)
 
 from bindings import BindingCollection
-from file_buffer import FileBuffer
+from app_state import AppState
 from readline_edit import ReadlineEdit
 
 class Dump(urwid.BoxWidget):
     PANE_HEX = 'hex'
     PANE_ASC = 'asc'
 
-    def __init__(self, file_buffer):
+    def __init__(self, main_window, file_buffer):
 
         self.pane = self.PANE_HEX
         self._file_buffer = file_buffer
@@ -48,11 +48,14 @@ class Dump(urwid.BoxWidget):
         b.add(['G'], lambda: self.go_to_offset(self._file_buffer.size))
         b.add(['^'], self.go_to_start_of_line)
         b.add(['$'], self.go_to_end_of_line)
+        b.add([':'], lambda: main_window.set_mode(AppState.MODE_COMMAND))
         b.compile()
-        self.binding_collection = b
+        self.bindings = b
 
     def keypress(self, pos, key):
-        return self.binding_collection.keypress(key)
+        if self.bindings.keypress(key):
+            return None
+        return key
 
     def get_cur_offset(self):
         return self._cur_offset
@@ -123,9 +126,6 @@ class Dump(urwid.BoxWidget):
             multi_canvas.pad_trim_left_right(0, width - multi_canvas.cols())
         return multi_canvas
 
-    def keypress(self, pos, key):
-        return self.binding_collection.keypress(key)
-
     def advance_offset_by_char(self, how_much):
         self.cur_offset += how_much
         self._invalidate()
@@ -155,13 +155,39 @@ class Dump(urwid.BoxWidget):
     bottom_offset = property(get_bottom_offset)
     visible_columns = property(get_visible_columns)
 
-class MainWindow(urwid.Frame):
-    def __init__(self, file_buffer):
-        self._file_buffer = file_buffer
+class Console(ReadlineEdit):
+    def __init__(self, main_window, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
+        self._main_window = main_window
+
+        b = BindingCollection()
+        b.add(['esc'], lambda: main_window.set_mode(AppState.MODE_NORMAL))
+        b.compile()
+        self.bindings = b
+
+    def keypress(self, pos, key):
+        if key == 'backspace' and not self.edit_text:
+            self._main_window.set_mode(AppState.MODE_NORMAL)
+        if self.bindings.keypress(key):
+            return None
+        return super().keypress(pos, key)
+
+    def get_prompt(self):
+        return self.caption
+
+    def set_prompt(self, value):
+        self.set_caption(value)
+
+    prompt = property(get_prompt, set_prompt)
+
+class MainWindow(urwid.Frame):
+    def __init__(self, app_state):
+        self._app_state = app_state
+
+        self._header = self._make_header()
         self._dump = self._make_dump()
         self._console = self._make_console()
-        self._header = self._make_header()
 
         urwid.Frame.__init__(
             self,
@@ -172,30 +198,40 @@ class MainWindow(urwid.Frame):
             ]),
             urwid.AttrMap(self._header, 'header'))
 
-        # focus the command line
-        self.focus.set_focus(2)
+        self.set_mode(AppState.MODE_NORMAL)
 
     def get_caption(self):
         return re.sub('^hexvi( - )?', '', self._header.base_widget.get_text()[0])
+
     def set_caption(self, value):
         self._header.base_widget.set_text('hexvi' if not value else 'hexvi - ' + value)
+
+    def set_mode(self, new_mode):
+        self._app_state.mode = new_mode
+        if new_mode == AppState.MODE_COMMAND:
+            self._console.prompt = ':'
+            self.focus.set_focus(2)
+        elif new_mode == AppState.MODE_NORMAL:
+            self._console.edit_text = ''
+            self._console.prompt = ''
+            self.focus.set_focus(0)
 
     def _make_header(self):
         return urwid.Text(u'hexvi')
 
     def _make_dump(self):
-        return Dump(self._file_buffer)
+        return Dump(self, self._app_state.file_buffer)
 
     def _make_console(self):
-        return ReadlineEdit()
+        return Console(self)
 
     caption = property(get_caption, set_caption)
 
 class Ui(object):
     def run(self, args):
-        file_buffer = FileBuffer(args.file)
-        self._main_window = MainWindow(file_buffer)
-        self._main_window.caption = file_buffer.path
+        app_state = AppState(args)
+        self._main_window = MainWindow(app_state)
+        self._main_window.caption = app_state.file_buffer.path
         urwid.MainLoop(
             self._main_window,
             palette=[

@@ -82,7 +82,6 @@ class BindingCollection(object):
         ]
         self._arg_bindings = {b.name: b for b in arg_bindings}
         self._nfa = NFA()
-        self.add(['esc'], self._reset)
 
     def add(self, path, func):
         state = self._nfa.init_state
@@ -114,11 +113,11 @@ class BindingCollection(object):
             for traversal in traversals:
                 if traversal.node.is_final:
                     traversal.node.func(*traversal.args)
-                    self._reset()
-                    return None
-        return key
+                    self.reset()
+                    return True
+        return False
 
-    def _reset(self):
+    def reset(self):
         self._args = []
         self._active_arg_binding = False
         self._traverser.reset()
