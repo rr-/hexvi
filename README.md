@@ -1,13 +1,13 @@
 Hexvi - a hex editor inspired by Vim.
 =====================================
 
-# Dependencies
+### Dependencies
 
 - Python3
 - `urwid` (`pip install urwid`)
 - `zope.event` (`pip install zope.event`)
 
-# Features
+### Features
 
 - Opening and displaying a file :)
 - Movement
@@ -34,7 +34,7 @@ Hexvi - a hex editor inspired by Vim.
     - <kbd>^</kbd>: move cursor to the start of display line
     - <kbd>$</kbd>: move cursor to the end of display line
 
-# Planned features
+### Planned features
 
 - Installation via `setup.py`
 - Colon commands
