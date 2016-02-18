@@ -14,12 +14,12 @@ from file_buffer import FileBuffer
 from readline_edit import ReadlineEdit
 
 class Dump(urwid.BoxWidget):
-    HEX = 'hex'
-    ASC = 'asc'
+    PANE_HEX = 'hex'
+    PANE_ASC = 'asc'
 
     def __init__(self, file_buffer):
 
-        self.pane = self.HEX
+        self.pane = self.PANE_HEX
         self._file_buffer = file_buffer
         self._top_offset = 0
         self._cur_offset = 0
@@ -105,7 +105,7 @@ class Dump(urwid.BoxWidget):
 
         append(urwid.TextCanvas(offset_canvas), 9, False)
 
-        if self.pane == self.HEX:
+        if self.pane == self.PANE_HEX:
             cursor_pos = (
                 (relative_cursor_offset % self.visible_columns) * 3,
                 relative_cursor_offset // self.visible_columns)
@@ -147,7 +147,7 @@ class Dump(urwid.BoxWidget):
         self._invalidate()
 
     def toggle_panes(self):
-        self.pane = self.HEX if self.pane == self.ASC else self.ASC
+        self.pane = self.PANE_HEX if self.pane == self.PANE_ASC else self.PANE_ASC
         self._invalidate()
 
     cur_offset = property(get_cur_offset, set_cur_offset)
