@@ -30,7 +30,7 @@ class Dump(urwid.BoxWidget):
         for i in range(height):
             row_offset = self._file_state.top_offset + i * self._file_state.visible_columns
             buffer = self._file_state.file_buffer.get_content_range(row_offset, self._file_state.visible_columns)
-            off_lines.append((b'%08x' % row_offset))
+            off_lines.append((b'%08x' % row_offset if row_offset - 1 < self._file_state.size else b''))
             hex_lines.append(b''.join(b'%02x ' % c for c in buffer))
             asc_lines.append(b''.join(b'%c' % c if c >= 32 and c < 127 else b'.' for c in buffer))
 
