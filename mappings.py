@@ -5,7 +5,7 @@ class Node(object):
 
     def __init__(self):
         self.func = None
-        self.binding = None
+        self.arg_proxy = None
         self.id = Node.__id
         Node.__id += 1
 
@@ -59,49 +59,49 @@ class NFATraverser(object):
 
     def _extend_traversal(self, source_traversal, target_node, symbol):
         res = NodeTraversal(target_node, source_traversal)
-        if target_node.binding:
+        if target_node.arg_proxy:
             if source_traversal.node.id != target_node.id:
                 res.args.append('')
             res.args[-1] += symbol
-        elif source_traversal.node.binding:
+        elif source_traversal.node.arg_proxy:
             res.args[-1] = (
-                source_traversal.node.binding.postprocessor(res.args[-1]))
+                source_traversal.node.arg_proxy.postprocessor(res.args[-1]))
         return res
 
-class ArgumentBinding(object):
+class ArgumentProxy(object):
     def __init__(self, name, keys, postprocessor=lambda x: x, loop=False):
         self.name = name
         self.keys = keys
         self.postprocessor = postprocessor
         self.loop = loop
 
-class BindingCollection(object):
+class MappingCollection(object):
     def __init__(self):
-        arg_bindings = [
-            ArgumentBinding(
+        arg_proxies = [
+            ArgumentProxy(
                 '<dec>',
                 list('0123456789'),
                 lambda x: int(x),
                 loop=True),
-            ArgumentBinding(
+            ArgumentProxy(
                 '<hex>',
                 list('0123456789abcdefABCDEF'),
                 lambda x: int(x, 16),
                 loop=True),
         ]
 
-        self._arg_bindings = {b.name: b for b in arg_bindings}
+        self._arg_proxies = {b.name: b for b in arg_proxies}
         self._nfa = NFA()
 
     def add(self, path, func):
         state = self._nfa.init_state
         for i, symbol in enumerate(path):
             next_state = Node()
-            if symbol in self._arg_bindings:
-                next_state.binding = self._arg_bindings[symbol]
-                for arg_symbol in next_state.binding.keys:
+            if symbol in self._arg_proxies:
+                next_state.arg_proxy = self._arg_proxies[symbol]
+                for arg_symbol in next_state.arg_proxy.keys:
                     self._nfa.connect(state, next_state, arg_symbol)
-                    if next_state.binding.loop:
+                    if next_state.arg_proxy.loop:
                         self._nfa.connect(next_state, next_state, arg_symbol)
             else:
                 if i == len(path) - 1:
@@ -129,5 +129,5 @@ class BindingCollection(object):
 
     def reset(self):
         self._args = []
-        self._active_arg_binding = False
+        self._active_arg_proxy = False
         self._traverser.reset()

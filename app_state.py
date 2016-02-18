@@ -1,5 +1,5 @@
 from file_state import FileState, WindowSizeChangeEvent
-from bindings import BindingCollection
+from mappings import MappingCollection
 import zope.event
 
 class FileBufferChangeEvent(object):
@@ -21,7 +21,7 @@ class AppState(object):
         # todo: manage this once we get multiple files support
         self._cur_file = FileState(args.file)
 
-        self.normal_mode_bindings = BindingCollection()
+        self.normal_mode_mappings = MappingCollection()
 
         self.nmap(['tab'], lambda: self.cur_file.toggle_panes())
         for k in ['h', 'right']: self.nmap([k], lambda: self.cur_file.move_cur_offset_by_char(-1))
@@ -39,13 +39,13 @@ class AppState(object):
         self.nmap(['$'],          lambda: self.cur_file.move_cur_offset_to_end_of_line())
         self.nmap([':'],          lambda: self.set_mode(AppState.MODE_COMMAND))
 
-        self.normal_mode_bindings.compile()
+        self.normal_mode_mappings.compile()
 
     def keypress(self, key):
-        return self.normal_mode_bindings.keypress(key)
+        return self.normal_mode_mappings.keypress(key)
 
     def nmap(self, key_sequence, command):
-        self.normal_mode_bindings.add(key_sequence, command)
+        self.normal_mode_mappings.add(key_sequence, command)
 
     def get_window_size(self):
         return self._window_size
