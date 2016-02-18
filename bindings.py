@@ -9,10 +9,6 @@ class Node(object):
         self.id = Node.__id
         Node.__id += 1
 
-    @property
-    def is_final(self):
-        return self.func is not None
-
 class NodeTraversal(object):
     def __init__(self, node, parent_traversal = None):
         self.node = node
@@ -56,16 +52,21 @@ class NFATraverser(object):
         target_traversals = []
         for traversal in self.current_traversals:
             for neighbour_node in self._nfa.connections(traversal.node, symbol):
-                new_traversal = NodeTraversal(neighbour_node, traversal)
-                if neighbour_node.binding:
-                    if traversal.node.id != neighbour_node.id:
-                        new_traversal.args.append('')
-                    new_traversal.args[-1] += symbol
-                elif traversal.node.binding:
-                    new_traversal.args[-1] = traversal.node.binding.postprocessor(new_traversal.args[-1])
-                target_traversals += [new_traversal]
+                target_traversals += [self._extend_traversal(
+                    traversal, neighbour_node, symbol)]
         self.current_traversals = target_traversals
         return target_traversals
+
+    def _extend_traversal(self, source_traversal, target_node, symbol):
+        res = NodeTraversal(target_node, source_traversal)
+        if target_node.binding:
+            if source_traversal.node.id != target_node.id:
+                res.args.append('')
+            res.args[-1] += symbol
+        elif source_traversal.node.binding:
+            res.args[-1] = (
+                source_traversal.node.binding.postprocessor(res.args[-1]))
+        return res
 
 class ArgumentBinding(object):
     def __init__(self, name, keys, postprocessor=lambda x: x, loop=False):
@@ -77,9 +78,18 @@ class ArgumentBinding(object):
 class BindingCollection(object):
     def __init__(self):
         arg_bindings = [
-            ArgumentBinding('<number>', list('0123456789'), lambda x: int(x), loop=True),
-            ArgumentBinding('<hex>', list('0123456789abcdefABCDEF'), lambda x: int(x, 16), loop=True),
+            ArgumentBinding(
+                '<number>',
+                list('0123456789'),
+                lambda x: int(x),
+                loop=True),
+            ArgumentBinding(
+                '<hex>',
+                list('0123456789abcdefABCDEF'),
+                lambda x: int(x, 16),
+                loop=True),
         ]
+
         self._arg_bindings = {b.name: b for b in arg_bindings}
         self._nfa = NFA()
 
@@ -111,7 +121,7 @@ class BindingCollection(object):
             self._traverser.reset()
         else:
             for traversal in traversals:
-                if traversal.node.is_final:
+                if traversal.node.func:
                     traversal.node.func(*traversal.args)
                     self.reset()
                     return True

@@ -19,7 +19,7 @@ class Dump(urwid.BoxWidget):
 
     def __init__(self, main_window, file_buffer):
 
-        self.pane = self.PANE_HEX
+        self._pane = self.PANE_HEX
         self._file_buffer = file_buffer
         self._top_offset = 0
         self._cur_offset = 0
@@ -27,27 +27,27 @@ class Dump(urwid.BoxWidget):
 
         b = BindingCollection()
         b.add(['tab'], self.toggle_panes)
-        b.add(['h'], lambda: self.advance_offset_by_char(-1))
-        b.add(['j'], lambda: self.advance_offset_by_line(1))
-        b.add(['k'], lambda: self.advance_offset_by_line(-1))
-        b.add(['l'], lambda: self.advance_offset_by_char(1))
-        b.add(['<number>', 'h'], lambda i: self.advance_offset_by_char(-i))
-        b.add(['<number>', 'j'], lambda i: self.advance_offset_by_line(i))
-        b.add(['<number>', 'k'], lambda i: self.advance_offset_by_line(-i))
-        b.add(['<number>', 'l'], lambda i: self.advance_offset_by_char(i))
-        b.add(['left'], lambda: self.advance_offset_by_char(-1))
-        b.add(['down'], lambda: self.advance_offset_by_line(1))
-        b.add(['up'], lambda: self.advance_offset_by_line(-1))
-        b.add(['right'], lambda: self.advance_offset_by_char(1))
-        b.add(['<number>', 'left'], lambda i: self.advance_offset_by_char(-i))
-        b.add(['<number>', 'down'], lambda i: self.advance_offset_by_line(i))
-        b.add(['<number>', 'up'], lambda i: self.advance_offset_by_line(-i))
-        b.add(['<number>', 'right'], lambda i: self.advance_offset_by_char(i))
-        b.add(['g', 'g'], lambda: self.go_to_offset(0))
-        b.add(['<hex>', 'G'], lambda i: self.go_to_offset(i))
-        b.add(['G'], lambda: self.go_to_offset(self._file_buffer.size))
-        b.add(['^'], self.go_to_start_of_line)
-        b.add(['$'], self.go_to_end_of_line)
+        b.add(['h'], lambda: self.move_cur_offset_by_char(-1))
+        b.add(['j'], lambda: self.move_cur_offset_by_line(1))
+        b.add(['k'], lambda: self.move_cur_offset_by_line(-1))
+        b.add(['l'], lambda: self.move_cur_offset_by_char(1))
+        b.add(['<number>', 'h'], lambda i: self.move_cur_offset_by_char(-i))
+        b.add(['<number>', 'j'], lambda i: self.move_cur_offset_by_line(i))
+        b.add(['<number>', 'k'], lambda i: self.move_cur_offset_by_line(-i))
+        b.add(['<number>', 'l'], lambda i: self.move_cur_offset_by_char(i))
+        b.add(['left'], lambda: self.move_cur_offset_by_char(-1))
+        b.add(['down'], lambda: self.move_cur_offset_by_line(1))
+        b.add(['up'], lambda: self.move_cur_offset_by_line(-1))
+        b.add(['right'], lambda: self.move_cur_offset_by_char(1))
+        b.add(['<number>', 'left'], lambda i: self.move_cur_offset_by_char(-i))
+        b.add(['<number>', 'down'], lambda i: self.move_cur_offset_by_line(i))
+        b.add(['<number>', 'up'], lambda i: self.move_cur_offset_by_line(-i))
+        b.add(['<number>', 'right'], lambda i: self.move_cur_offset_by_char(i))
+        b.add(['g', 'g'], lambda: self.set_cur_offset(0))
+        b.add(['<hex>', 'G'], lambda i: self.set_cur_offset(i))
+        b.add(['G'], lambda: self.set_cur_offset(self._file_buffer.size))
+        b.add(['^'], self.move_cur_offset_to_start_of_line)
+        b.add(['$'], self.move_cur_offset_to_end_of_line)
         b.add([':'], lambda: main_window.set_mode(AppState.MODE_COMMAND))
         b.compile()
         self.bindings = b
@@ -57,17 +57,41 @@ class Dump(urwid.BoxWidget):
             return None
         return key
 
+    def get_pane(self):
+        return self._pane
+
+    def set_pane(self, value):
+        self._pane = value
+        self._invalidate()
+
+    def toggle_panes(self):
+        self.pane = [self.PANE_HEX, self.PANE_ASC][self.pane == self.PANE_HEX]
+
     def get_cur_offset(self):
         return self._cur_offset
 
     def set_cur_offset(self, value):
         self._cur_offset = max(0, min(self._file_buffer.size, value))
+        self._invalidate()
+
+    def move_cur_offset_by_char(self, how_much):
+        self.cur_offset += how_much
+
+    def move_cur_offset_by_line(self, how_much):
+        self.cur_offset += how_much * self.visible_columns
+
+    def move_cur_offset_to_start_of_line(self):
+        self.cur_offset -= self.cur_offset % self.visible_columns
+
+    def move_cur_offset_to_end_of_line(self):
+        self.cur_offset += self.visible_columns - 1 - self.cur_offset % self.visible_columns
 
     def get_top_offset(self):
         return self._top_offset
 
     def set_top_offset(self, value):
         self._top_offset = max(0, min(self._file_buffer.size, value))
+        self._invalidate()
 
     def get_bottom_offset(self):
         return self.top_offset + self._size[1] * self.visible_columns
@@ -83,75 +107,47 @@ class Dump(urwid.BoxWidget):
         # todo: let user override this in the configuration
         scrolloff = 0
         scrolloff = max(0, scrolloff) + 1
-        if self.cur_offset < self.top_offset + (scrolloff - 1) * self.visible_columns:
+        if self.top_offset + (scrolloff - 1) * self.visible_columns > self.cur_offset:
             self.top_offset -= self.visible_columns * ((self.top_offset - self.cur_offset - 1) // self.visible_columns + scrolloff)
         elif self.cur_offset >= self.bottom_offset - (scrolloff - 1) * self.visible_columns:
             self.top_offset += self.visible_columns * ((self.cur_offset - self.bottom_offset) // self.visible_columns + scrolloff)
 
-        offset_canvas = []
-        hex_canvas = []
-        asc_canvas = []
+        off_lines = []
+        hex_lines = []
+        asc_lines = []
         for i in range(height):
             row_offset = self.top_offset + i * self.visible_columns
             buffer = self._file_buffer.get_content_range(row_offset, self.visible_columns)
-            offset_canvas.append(('%08x' % row_offset).encode('utf8'))
-            hex_canvas.append(''.join('%02x ' % c for c in buffer).encode('utf8'))
-            asc_canvas.append(''.join('%c' % c if c >= 32 and c < 127 else '.' for c in buffer).encode('utf8'))
+            off_lines.append((b'%08x' % row_offset))
+            hex_lines.append(b''.join(b'%02x ' % c for c in buffer))
+            asc_lines.append(b''.join(b'%c' % c if c >= 32 and c < 127 else b'.' for c in buffer))
 
         relative_cursor_offset = self.cur_offset - self.top_offset
+        cursor_pos = (
+            relative_cursor_offset % self.visible_columns,
+            relative_cursor_offset // self.visible_columns)
+        if self.pane == self.PANE_HEX:
+            cursor_pos = (cursor_pos[0] * 3, cursor_pos[1])
 
         canvas_def = []
         Dump.pos = 0
         def append(widget, width, is_focused):
             canvas_def.append((widget, Dump.pos, False, width))
             Dump.pos += width
+        append(urwid.TextCanvas(off_lines), 9, False)
+        append(urwid.TextCanvas(hex_lines), self.visible_columns * 3, True)
+        append(urwid.TextCanvas(asc_lines), self.visible_columns, False)
 
-        append(urwid.TextCanvas(offset_canvas), 9, False)
-
-        if self.pane == self.PANE_HEX:
-            cursor_pos = (
-                (relative_cursor_offset % self.visible_columns) * 3,
-                relative_cursor_offset // self.visible_columns)
-            append(urwid.TextCanvas(hex_canvas, cursor=cursor_pos), self.visible_columns * 3, True)
-            append(urwid.TextCanvas(asc_canvas), self.visible_columns, False)
-        else:
-            cursor_pos = (
-                relative_cursor_offset % self.visible_columns,
-                relative_cursor_offset // self.visible_columns)
-            append(urwid.TextCanvas(hex_canvas), self.visible_columns * 3, False)
-            append(urwid.TextCanvas(asc_canvas, cursor=cursor_pos), self.visible_columns, True)
+        canvas_def[[1, 2][self.pane == self.PANE_ASC]][0].cursor = cursor_pos
 
         multi_canvas = urwid.CanvasJoin(canvas_def)
         if multi_canvas.cols() < width:
             multi_canvas.pad_trim_left_right(0, width - multi_canvas.cols())
         return multi_canvas
 
-    def advance_offset_by_char(self, how_much):
-        self.cur_offset += how_much
-        self._invalidate()
-
-    def advance_offset_by_line(self, how_much):
-        self.cur_offset += how_much * self.visible_columns
-        self._invalidate()
-
-    def go_to_offset(self, offset):
-        self.cur_offset = offset
-        self._invalidate()
-
-    def go_to_start_of_line(self):
-        self.cur_offset -= self.cur_offset % self.visible_columns
-        self._invalidate()
-
-    def go_to_end_of_line(self):
-        self.cur_offset += self.visible_columns - 1 - self.cur_offset % self.visible_columns
-        self._invalidate()
-
-    def toggle_panes(self):
-        self.pane = self.PANE_HEX if self.pane == self.PANE_ASC else self.PANE_ASC
-        self._invalidate()
-
     cur_offset = property(get_cur_offset, set_cur_offset)
     top_offset = property(get_top_offset, set_top_offset)
+    pane = property(get_pane, set_pane)
     bottom_offset = property(get_bottom_offset)
     visible_columns = property(get_visible_columns)
 
