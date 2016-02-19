@@ -1,11 +1,10 @@
 Hexvi - a hex editor inspired by Vim.
 =====================================
 
-### Dependencies
+### Installation
 
-- Python3
-- `urwid` (`pip install urwid`)
-- `zope.event` (`pip install zope.event`)
+- Global: `sudo python setup.py install`
+- Local:  `python setup.py install --local`
 
 ### Features
 
@@ -33,10 +32,10 @@ Hexvi - a hex editor inspired by Vim.
     - <kbd>*hex*</kbd><kbd>G</kbd>: move cursor to the *hex* offset
     - <kbd>^</kbd>: move cursor to the start of display line
     - <kbd>$</kbd>: move cursor to the end of display line
+- Installation via `setuptools`
 
 ### Planned features
 
-- Installation via `setup.py`
 - Colon commands
 - Multiple buffers (via tabs)
 - Search

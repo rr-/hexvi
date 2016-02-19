@@ -1,7 +1,7 @@
 #!/bin/python3
 import argparse
 
-from ui import Ui
+from .ui import Ui
 
 def parse_args():
     parser = argparse.ArgumentParser(

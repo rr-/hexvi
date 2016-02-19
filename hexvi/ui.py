@@ -1,8 +1,8 @@
 import sys
 import re
-from app_state import AppState, WindowSizeChangeEvent, ModeChangeEvent
-from file_state import PaneChangeEvent, OffsetChangeEvent
-from readline_edit import ReadlineEdit
+from .app_state import AppState, WindowSizeChangeEvent, ModeChangeEvent
+from .file_state import PaneChangeEvent, OffsetChangeEvent
+from .readline_edit import ReadlineEdit
 
 try:
     import urwid

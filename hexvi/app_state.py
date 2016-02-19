@@ -1,5 +1,5 @@
-from file_state import FileState, WindowSizeChangeEvent
-from mappings import MappingCollection
+from .file_state import FileState, WindowSizeChangeEvent
+from .mappings import MappingCollection
 import zope.event
 
 class FileBufferChangeEvent(object):

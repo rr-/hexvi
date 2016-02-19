@@ -1,4 +1,4 @@
-from file_buffer import FileBuffer
+from .file_buffer import FileBuffer
 import zope.event
 import zope.event.classhandler
 
