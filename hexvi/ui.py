@@ -79,19 +79,46 @@ class Console(ReadlineEdit):
 
     prompt = property(get_prompt, set_prompt)
 
+class StatusBar(urwid.Widget):
+    def __init__(self, app_state, *args, **kwargs):
+        urwid.Widget.__init__(self, *args, **kwargs)
+        self._app_state = app_state
+        zope.event.classhandler.handler(OffsetChangeEvent, lambda *_: self._invalidate())
+        zope.event.classhandler.handler(ModeChangeEvent, lambda *_: self._invalidate())
+
+    def rows(self, size, focus=False):
+        return 1
+
+    def render(self, size, focus=False):
+        left = '%s | %s' % (
+            self._app_state.mode.upper(),
+            self._app_state.cur_file.file_buffer.path)
+        right = '0x%X / 0x%X (%d%%)' % (
+            self._app_state.cur_file.cur_offset,
+            self._app_state.cur_file.size,
+            self._app_state.cur_file.cur_offset * 100.0 / self._app_state.cur_file.size)
+
+        left_canvas = urwid.TextCanvas([left.encode('utf-8')])
+        right_canvas = urwid.TextCanvas([right.encode('utf-8')])
+        composite_canvas = urwid.CanvasJoin([
+            (left_canvas, None, False, size[0] - len(right)),
+            (right_canvas, None, False, len(right))])
+        return composite_canvas
+
 class MainWindow(urwid.Frame):
     def __init__(self, app_state):
         self._app_state = app_state
 
         self._header = self._make_header()
         self._dump = self._make_dump()
+        self._status_bar = self._make_status_bar()
         self._console = self._make_console()
 
         urwid.Frame.__init__(
             self,
             urwid.Pile([
                 self._dump,
-                ('fixed', 1, urwid.AttrMap(urwid.SolidFill(), 'header')),
+                ('fixed', 1, urwid.Filler(urwid.AttrMap(self._status_bar, 'status'))),
                 ('fixed', 1, urwid.Filler(self._console)),
             ]),
             urwid.AttrMap(self._header, 'header'))
@@ -119,6 +146,9 @@ class MainWindow(urwid.Frame):
     def _make_dump(self):
         return Dump(self._app_state, self._app_state.cur_file)
 
+    def _make_status_bar(self):
+        return StatusBar(self._app_state)
+
     def _make_console(self):
         return Console(self._app_state)
 
@@ -140,6 +170,7 @@ class Ui(object):
             palette=[
                 ('selected', 'light red', ''),
                 ('header', 'standout', ''),
+                ('status', 'standout', ''),
             ],
             unhandled_input=self._key_pressed).run()
 
