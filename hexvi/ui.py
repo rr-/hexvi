@@ -69,6 +69,8 @@ class Console(ReadlineEdit):
         if (key == 'backspace' and not self.edit_text) or key == 'esc':
             self._app_state.mode = AppState.MODE_NORMAL
             return None
+        if key == 'enter':
+            self._app_state.accept_raw_command(self.edit_text)
         return super().keypress(pos, key)
 
     def get_prompt(self):
@@ -132,13 +134,13 @@ class MainWindow(urwid.Frame):
         self._header.base_widget.set_text('hexvi' if not value else 'hexvi - ' + value)
 
     def _mode_changed(self, evt):
-        if evt.mode == AppState.MODE_COMMAND:
-            self._console.prompt = ':'
-            self.focus.set_focus(2)
-        elif evt.mode == AppState.MODE_NORMAL:
+        if evt.mode == AppState.MODE_NORMAL:
             self._console.edit_text = ''
             self._console.prompt = ''
             self.focus.set_focus(0)
+        else:
+            self._console.prompt = evt.char or ''
+            self.focus.set_focus(2)
 
     def _make_header(self):
         return urwid.Text(u'hexvi')
@@ -157,9 +159,7 @@ class MainWindow(urwid.Frame):
 class Ui(object):
     def run(self, args):
         self._app_state = AppState(args)
-
         self._main_window = MainWindow(self._app_state)
-
         self._app_state.mode = AppState.MODE_NORMAL
 
         # todo: subscribe to changes of app_sate.cur_file

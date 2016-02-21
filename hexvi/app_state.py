@@ -7,12 +7,21 @@ class FileBufferChangeEvent(object):
         self.file_buffer = file_buffer
 
 class ModeChangeEvent(object):
-    def __init__(self, mode):
+    def __init__(self, mode, char=None):
         self.mode = mode
+        self.char = char
 
 class AppState(object):
     MODE_NORMAL = 'normal'
     MODE_COMMAND = 'command'
+    MODE_SEARCH_FORWARD = 'search'
+    MODE_SEARCH_BACKWARD = 'rev-search'
+
+    MODE_KEY_MAP = {
+        ':': MODE_COMMAND,
+        '/': MODE_SEARCH_FORWARD,
+        '?': MODE_SEARCH_BACKWARD,
+    }
 
     def __init__(self, args):
         self._window_size = (0, 0)
@@ -37,7 +46,9 @@ class AppState(object):
         self.nmap(['G'],          lambda: self.cur_file.set_cur_offset(self.cur_file.size))
         self.nmap(['^'],          lambda: self.cur_file.move_cur_offset_to_start_of_line())
         self.nmap(['$'],          lambda: self.cur_file.move_cur_offset_to_end_of_line())
-        self.nmap([':'],          lambda: self.set_mode(AppState.MODE_COMMAND))
+
+        for key, mode in self.MODE_KEY_MAP.items():
+            self.nmap([key], (lambda m, k: lambda: self.set_mode(m, k))(mode, key))
 
         self.normal_mode_mappings.compile()
 
@@ -46,6 +57,9 @@ class AppState(object):
 
     def nmap(self, key_sequence, command):
         self.normal_mode_mappings.add(key_sequence, command)
+
+    def accept_raw_command(self, text):
+        raise NotImplementedError(text)
 
     def get_window_size(self):
         return self._window_size
@@ -66,10 +80,10 @@ class AppState(object):
     def get_mode(self):
         return self._mode
 
-    def set_mode(self, value):
+    def set_mode(self, value, char=None):
         if value != self._mode:
             self._mode = value
-            zope.event.notify(ModeChangeEvent(value))
+            zope.event.notify(ModeChangeEvent(value, char))
 
     cur_file = property(get_cur_file)
     mode = property(get_mode, set_mode)
