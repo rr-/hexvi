@@ -13,6 +13,12 @@ except ImportError as e:
     print('Please install %s.' % e.name)
     sys.exit(1)
 
+def trim_left(text, size):
+    ellipsis = '(...)'
+    if len(text) <= size:
+        return text
+    return ellipsis + text[len(ellipsis)+len(text)-size:]
+
 class Dump(urwid.BoxWidget):
     def __init__(self, app_state, file_state):
         self._app_state = app_state
@@ -92,13 +98,15 @@ class StatusBar(urwid.Widget):
         return 1
 
     def render(self, size, focus=False):
-        left = '%s | %s' % (
-            self._app_state.mode.upper(),
-            self._app_state.cur_file.file_buffer.path)
         right = '0x%X / 0x%X (%d%%)' % (
             self._app_state.cur_file.cur_offset,
             self._app_state.cur_file.size,
             self._app_state.cur_file.cur_offset * 100.0 / self._app_state.cur_file.size)
+
+        left = '[%s] ' % self._app_state.mode.upper()
+        left += trim_left(
+            self._app_state.cur_file.file_buffer.path,
+            size[0] - (len(right) + len(left) + 3))
 
         left_canvas = urwid.TextCanvas([left.encode('utf-8')])
         right_canvas = urwid.TextCanvas([right.encode('utf-8')])
