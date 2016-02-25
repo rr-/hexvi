@@ -62,26 +62,18 @@ class FileState(object):
     def get_top_offset(self):
         return self._top_offset
 
-    def move_cur_offset_by_char(self, how_much):
-        self.cur_offset += how_much
-
-    def move_cur_offset_by_line(self, how_much):
-        self.cur_offset += how_much * self.visible_columns
-
-    def move_cur_offset_to_start_of_line(self):
-        self.cur_offset -= self.cur_offset % self.visible_columns
-
-    def move_cur_offset_to_end_of_line(self):
-        self.cur_offset += self.visible_columns - 1 - self.cur_offset % self.visible_columns
-
     def _validate_top_offset(self):
         # todo: let user override this in the configuration
         scrolloff = 0
         scrolloff = max(0, scrolloff) + 1
         if self.top_offset + (scrolloff - 1) * self.visible_columns > self.cur_offset:
-            self.top_offset -= self.visible_columns * ((self.top_offset - self.cur_offset - 1) // self.visible_columns + scrolloff)
+            self.top_offset -= self.visible_columns * (
+                (self.top_offset - self.cur_offset - 1)
+                // self.visible_columns + scrolloff)
         elif self.cur_offset >= self.bottom_offset - (scrolloff - 1) * self.visible_columns:
-            self.top_offset += self.visible_columns * ((self.cur_offset - self.bottom_offset) // self.visible_columns + scrolloff)
+            self.top_offset += self.visible_columns * (
+                (self.cur_offset - self.bottom_offset)
+                // self.visible_columns + scrolloff)
 
     cur_offset = property(get_cur_offset, set_cur_offset)
     top_offset = property(get_top_offset, set_top_offset)
