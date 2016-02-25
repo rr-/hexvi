@@ -165,8 +165,10 @@ class MainWindow(urwid.Frame):
     caption = property(get_caption, set_caption)
 
 class Ui(object):
-    def run(self, args):
-        self._app_state = AppState(args)
+    def __init__(self, app_state):
+        self._app_state = app_state
+
+    def run(self):
         self._main_window = MainWindow(self._app_state)
         self._app_state.mode = AppState.MODE_NORMAL
 

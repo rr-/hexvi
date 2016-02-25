@@ -1,6 +1,7 @@
 #!/bin/python3
 import argparse
 
+from .app_state import AppState
 from .ui import Ui
 
 def parse_args():
@@ -12,8 +13,8 @@ def parse_args():
 
 def main():
     args = parse_args()
-    ui = Ui()
-    ui.run(args)
+    app_state = AppState(args)
+    Ui(app_state).run()
 
 if __name__ == '__main__':
     main()
