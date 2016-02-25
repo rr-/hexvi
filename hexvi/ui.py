@@ -118,6 +118,10 @@ class StatusBar(urwid.Widget):
             (right_canvas, None, False, len(right))])
         return composite_canvas
 
+class DumbPile(urwid.Pile):
+    def keypress(self, pos, key):
+        return self.focus.keypress(pos, key)
+
 class MainWindow(urwid.Frame):
     def __init__(self, app_state):
         self._app_state = app_state
@@ -129,7 +133,7 @@ class MainWindow(urwid.Frame):
 
         urwid.Frame.__init__(
             self,
-            urwid.Pile([
+            DumbPile([
                 self._dump,
                 ('fixed', 1, urwid.Filler(urwid.AttrMap(self._status_bar, 'status'))),
                 ('fixed', 1, urwid.Filler(self._console)),
