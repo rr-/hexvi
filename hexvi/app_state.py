@@ -1,6 +1,8 @@
 from .file_state import FileState, WindowSizeChangeEvent
 from .mappings import MappingCollection
+from .command_processor import CommandProcessor
 import zope.event
+import shlex
 
 class FileBufferChangeEvent(object):
     def __init__(self, file_buffer):
@@ -26,6 +28,7 @@ class AppState(object):
     def __init__(self, args):
         self._window_size = (0, 0)
         self._mode = AppState.MODE_COMMAND
+        self._command_processor = CommandProcessor(self)
 
         # todo: manage this once we get multiple files support
         self._cur_file = FileState(args.file)
@@ -46,6 +49,7 @@ class AppState(object):
         self.nmap(['G'],          lambda: self.cur_file.set_cur_offset(self.cur_file.size))
         self.nmap(['^'],          lambda: self.cur_file.move_cur_offset_to_start_of_line())
         self.nmap(['$'],          lambda: self.cur_file.move_cur_offset_to_end_of_line())
+        self.nmap(['ctrl q'],     lambda: self.execute_command('quit'))
 
         for key, mode in self.MODE_KEY_MAP.items():
             self.nmap([key], (lambda m, k: lambda: self.set_mode(m, k))(mode, key))
@@ -58,8 +62,15 @@ class AppState(object):
     def nmap(self, key_sequence, command):
         self.normal_mode_mappings.add(key_sequence, command)
 
-    def accept_raw_command(self, text):
-        raise NotImplementedError(text)
+    def accept_raw_input(self, text):
+        if self.mode == self.MODE_COMMAND:
+            command, *args = shlex.shlex(text)
+            self.execute_command(command, *args)
+        else:
+            raise NotImplementedError(text)
+
+    def execute_command(self, command, *args):
+        self._command_processor.execute(command, *args)
 
     def get_window_size(self):
         return self._window_size

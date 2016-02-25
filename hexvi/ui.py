@@ -1,5 +1,6 @@
 import sys
 import re
+from .command_processor import ProgramExitEvent
 from .app_state import AppState, WindowSizeChangeEvent, ModeChangeEvent
 from .file_state import PaneChangeEvent, OffsetChangeEvent
 from .readline_edit import ReadlineEdit
@@ -76,7 +77,9 @@ class Console(ReadlineEdit):
             self._app_state.mode = AppState.MODE_NORMAL
             return None
         if key == 'enter':
-            self._app_state.accept_raw_command(self.edit_text)
+            self._app_state.accept_raw_input(self.edit_text)
+            self.edit_text = ''
+            self._app_state.mode = AppState.MODE_NORMAL
         return super().keypress(pos, key)
 
     def get_prompt(self):
@@ -172,6 +175,8 @@ class Ui(object):
         self._main_window = MainWindow(self._app_state)
         self._app_state.mode = AppState.MODE_NORMAL
 
+        zope.event.classhandler.handler(ProgramExitEvent, lambda *args: self._exit())
+
         # todo: subscribe to changes of app_sate.cur_file
         self._main_window.caption = self._app_state.cur_file.file_buffer.path
 
@@ -184,7 +189,8 @@ class Ui(object):
             ],
             unhandled_input=self._key_pressed).run()
 
+    def _exit(self):
+        raise urwid.ExitMainLoop()
+
     def _key_pressed(self, key):
-        if key == 'ctrl q':
-            raise urwid.ExitMainLoop()
         self._app_state.keypress(key)
