@@ -35,26 +35,31 @@ class AppState(object):
 
         self.normal_mode_mappings = MappingCollection()
 
-        self.nmap(['tab'], lambda: self.cur_file.toggle_panes())
-        for k in ['h', 'right']: self.nmap([k], lambda: self.exec('jump_by_bytes', '-1'))
-        for k in ['j', 'down']:  self.nmap([k], lambda: self.exec('jump_by_lines', '1'))
-        for k in ['k', 'up']:    self.nmap([k], lambda: self.exec('jump_by_lines', '-1'))
-        for k in ['l', 'right']: self.nmap([k], lambda: self.exec('jump_by_bytes', '1'))
-        for k in ['h', 'right']: self.nmap(['<dec>', k], lambda i: self.exec('jump_by_bytes', '-'+i))
-        for k in ['j', 'down']:  self.nmap(['<dec>', k], lambda i: self.exec('jump_by_lines', i))
-        for k in ['k', 'up']:    self.nmap(['<dec>', k], lambda i: self.exec('jump_by_lines', '-'+i))
-        for k in ['l', 'right']: self.nmap(['<dec>', k], lambda i: self.exec('jump_by_bytes', i))
-        self.nmap(['<hex>', 'G'], lambda i: self.exec('jump_to', i))
-        self.nmap(['g', 'g'],     lambda: self.exec('jump_to_start_of_file'))
-        self.nmap(['G'],          lambda: self.exec('jump_to_end_of_file'))
-        self.nmap(['^'],          lambda: self.exec('jump_to_start_of_line'))
-        self.nmap(['$'],          lambda: self.exec('jump_to_end_of_line'))
-        self.nmap(['ctrl q'],     lambda: self.exec('quit'))
+        self.exec('nmap', 'h',              ':jump_by_bytes -1')
+        self.exec('nmap', 'j',              ':jump_by_lines 1')
+        self.exec('nmap', 'k',              ':jump_by_lines -1')
+        self.exec('nmap', 'l',              ':jump_by_bytes 1')
+        self.exec('nmap', '<left>',         ':jump_by_bytes -1')
+        self.exec('nmap', '<down>',         ':jump_by_lines 1')
+        self.exec('nmap', '<up>',           ':jump_by_lines -1')
+        self.exec('nmap', '<right>',        ':jump_by_bytes 1')
+        self.exec('nmap', '{dec}h',         ':jump_by_bytes -{arg0}')
+        self.exec('nmap', '{dec}j',         ':jump_by_lines {arg0}')
+        self.exec('nmap', '{dec}k',         ':jump_by_lines -{arg0}')
+        self.exec('nmap', '{dec}l',         ':jump_by_bytes {arg0}')
+        self.exec('nmap', '{dec}<left>',    ':jump_by_bytes -{arg0}')
+        self.exec('nmap', '{dec}<down>',    ':jump_by_lines {arg0}')
+        self.exec('nmap', '{dec}<up>',      ':jump_by_lines -{arg0}')
+        self.exec('nmap', '{dec}<right>',   ':jump_by_bytes {arg0}')
+        self.exec('nmap', '{hex}G',         ':jump_to {arg0}')
+        self.exec('nmap', 'gg',             ':jump_to_start_of_file')
+        self.exec('nmap', 'G',              ':jump_to_end_of_file')
+        self.exec('nmap', '^',              ':jump_to_start_of_line')
+        self.exec('nmap', '$',              ':jump_to_end_of_line')
+        self.exec('nmap', '<ctrl q>',       ':quit')
 
         for key, mode in self.MODE_KEY_MAP.items():
             self.nmap([key], (lambda m, k: lambda: self.set_mode(m, k))(mode, key))
-
-        self.normal_mode_mappings.compile()
 
     def keypress(self, key):
         return self.normal_mode_mappings.keypress(key)
@@ -64,7 +69,7 @@ class AppState(object):
 
     def accept_raw_input(self, text):
         if self.mode == self.MODE_COMMAND:
-            command, *args = shlex.shlex(text)
+            command, *args = shlex.split(text)
             self.exec(command, *args)
         else:
             raise NotImplementedError(text)
