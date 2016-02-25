@@ -8,7 +8,7 @@ class Command(object):
         self.names = names
         self.func = func
 
-def command(names):
+def cmd(names):
     def decorator(func):
         return Command(names, func)
     return decorator
@@ -21,12 +21,43 @@ class CommandProcessor(object):
             if x.startswith('cmd_'):
                 self._commands.append(getattr(self, x))
 
-    @command(names=['q', 'quit'])
+    @cmd(names=['q', 'quit'])
     def cmd_exit(self):
         zope.event.notify(ProgramExitEvent())
 
-    def execute(self, command_name, *args):
-        for command in self._commands:
-            if command_name in command.names:
-                return command.func(self, *args)
-        raise RuntimeError('Unknown command: ' + command_name)
+    @cmd(names=['jump_to'])
+    def cmd_jump_to(self, offset):
+        offset = int(offset, 16)
+        self._app_state.cur_file.set_cur_offset(offset)
+
+    @cmd(names=['jump_by_bytes'])
+    def cmd_jump_by_bytes(self, offset='1'):
+        offset = int(offset)
+        self._app_state.cur_file.move_cur_offset_by_char(offset)
+
+    @cmd(names=['jump_by_lines'])
+    def cmd_jump_by_lines(self, offset='1'):
+        offset = int(offset)
+        self._app_state.cur_file.move_cur_offset_by_line(offset)
+
+    @cmd(names=['jump_to_start_of_line'])
+    def cmd_jump_to_start_of_line(self):
+        self._app_state.cur_file.move_cur_offset_to_start_of_line()
+
+    @cmd(names=['jump_to_end_of_line'])
+    def cmd_jump_to_end_of_line(self):
+        self._app_state.cur_file.move_cur_offset_to_end_of_line()
+
+    @cmd(names=['jump_to_start_of_file'])
+    def cmd_jump_to_start_of_file(self):
+        self._app_state.cur_file.set_cur_offset(0)
+
+    @cmd(names=['jump_to_end_of_file'])
+    def cmd_jump_to_end_of_file(self):
+        self._app_state.cur_file.set_cur_offset(self._app_state.cur_file.size)
+
+    def exec(self, cmd_name, *args):
+        for cmd in self._commands:
+            if cmd_name in cmd.names:
+                return cmd.func(self, *args)
+        raise RuntimeError('Unknown command: ' + cmd_name)

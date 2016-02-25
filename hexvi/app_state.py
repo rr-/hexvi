@@ -36,20 +36,20 @@ class AppState(object):
         self.normal_mode_mappings = MappingCollection()
 
         self.nmap(['tab'], lambda: self.cur_file.toggle_panes())
-        for k in ['h', 'right']: self.nmap([k], lambda: self.cur_file.move_cur_offset_by_char(-1))
-        for k in ['j', 'down']:  self.nmap([k], lambda: self.cur_file.move_cur_offset_by_line(1))
-        for k in ['k', 'up']:    self.nmap([k], lambda: self.cur_file.move_cur_offset_by_line(-1))
-        for k in ['l', 'right']: self.nmap([k], lambda: self.cur_file.move_cur_offset_by_char(1))
-        for k in ['h', 'right']: self.nmap(['<dec>', k], lambda i: self.cur_file.move_cur_offset_by_char(-i))
-        for k in ['j', 'down']:  self.nmap(['<dec>', k], lambda i: self.cur_file.move_cur_offset_by_line(i))
-        for k in ['k', 'up']:    self.nmap(['<dec>', k], lambda i: self.cur_file.move_cur_offset_by_line(-i))
-        for k in ['l', 'right']: self.nmap(['<dec>', k], lambda i: self.cur_file.move_cur_offset_by_char(i))
-        self.nmap(['<hex>', 'G'], lambda i: self.cur_file.set_cur_offset(i))
-        self.nmap(['g', 'g'],     lambda: self.cur_file.set_cur_offset(0))
-        self.nmap(['G'],          lambda: self.cur_file.set_cur_offset(self.cur_file.size))
-        self.nmap(['^'],          lambda: self.cur_file.move_cur_offset_to_start_of_line())
-        self.nmap(['$'],          lambda: self.cur_file.move_cur_offset_to_end_of_line())
-        self.nmap(['ctrl q'],     lambda: self.execute_command('quit'))
+        for k in ['h', 'right']: self.nmap([k], lambda: self.exec('jump_by_bytes', '-1'))
+        for k in ['j', 'down']:  self.nmap([k], lambda: self.exec('jump_by_lines', '1'))
+        for k in ['k', 'up']:    self.nmap([k], lambda: self.exec('jump_by_lines', '-1'))
+        for k in ['l', 'right']: self.nmap([k], lambda: self.exec('jump_by_bytes', '1'))
+        for k in ['h', 'right']: self.nmap(['<dec>', k], lambda i: self.exec('jump_by_bytes', '-'+i))
+        for k in ['j', 'down']:  self.nmap(['<dec>', k], lambda i: self.exec('jump_by_lines', i))
+        for k in ['k', 'up']:    self.nmap(['<dec>', k], lambda i: self.exec('jump_by_lines', '-'+i))
+        for k in ['l', 'right']: self.nmap(['<dec>', k], lambda i: self.exec('jump_by_bytes', i))
+        self.nmap(['<hex>', 'G'], lambda i: self.exec('jump_to', i))
+        self.nmap(['g', 'g'],     lambda: self.exec('jump_to_start_of_file'))
+        self.nmap(['G'],          lambda: self.exec('jump_to_end_of_file'))
+        self.nmap(['^'],          lambda: self.exec('jump_to_start_of_line'))
+        self.nmap(['$'],          lambda: self.exec('jump_to_end_of_line'))
+        self.nmap(['ctrl q'],     lambda: self.exec('quit'))
 
         for key, mode in self.MODE_KEY_MAP.items():
             self.nmap([key], (lambda m, k: lambda: self.set_mode(m, k))(mode, key))
@@ -65,12 +65,12 @@ class AppState(object):
     def accept_raw_input(self, text):
         if self.mode == self.MODE_COMMAND:
             command, *args = shlex.shlex(text)
-            self.execute_command(command, *args)
+            self.exec(command, *args)
         else:
             raise NotImplementedError(text)
 
-    def execute_command(self, command, *args):
-        self._command_processor.execute(command, *args)
+    def exec(self, command, *args):
+        self._command_processor.exec(command, *args)
 
     def get_window_size(self):
         return self._window_size

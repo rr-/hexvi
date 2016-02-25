@@ -78,16 +78,8 @@ class ArgumentProxy(object):
 class MappingCollection(object):
     def __init__(self):
         arg_proxies = [
-            ArgumentProxy(
-                '<dec>',
-                list('0123456789'),
-                lambda x: int(x),
-                loop=True),
-            ArgumentProxy(
-                '<hex>',
-                list('0123456789abcdefABCDEF'),
-                lambda x: int(x, 16),
-                loop=True),
+            ArgumentProxy('<dec>', list('0123456789'), loop=True),
+            ArgumentProxy('<hex>', list('0123456789abcdefABCDEF'), loop=True),
         ]
 
         self._arg_proxies = {b.name: b for b in arg_proxies}
