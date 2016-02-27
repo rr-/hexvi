@@ -33,6 +33,14 @@ class CommandProcessor(object):
     def cmd_exit(self):
         zope.event.notify(ProgramExitEvent())
 
+    @cmd(names=['toggle_pane', 'toggle_panes'])
+    def cmd_toggle_panes(self):
+        panes = [
+            self._app_state.cur_file.PANE_HEX,
+            self._app_state.cur_file.PANE_ASC]
+        self._app_state.cur_file.pane = (
+            panes[self._app_state.cur_file.pane == panes[0]])
+
     @cmd(names=['jump_to'])
     def cmd_jump_to(self, offset):
         offset = int(offset, 16)

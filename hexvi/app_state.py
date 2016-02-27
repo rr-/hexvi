@@ -56,6 +56,7 @@ class AppState(object):
         self.exec('nmap', 'G',              ':jump_to_end_of_file')
         self.exec('nmap', '^',              ':jump_to_start_of_line')
         self.exec('nmap', '$',              ':jump_to_end_of_line')
+        self.exec('nmap', '{tab}',          ':toggle_pane')
         self.exec('nmap', '<ctrl q>',       ':quit')
 
         for key, mode in self.MODE_KEY_MAP.items():

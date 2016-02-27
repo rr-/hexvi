@@ -30,9 +30,6 @@ class FileState(object):
         self._window_size = event.size
         self._validate_top_offset()
 
-    def toggle_panes(self):
-        self.pane = [self.PANE_HEX, self.PANE_ASC][self.pane == self.PANE_HEX]
-
     def get_visible_columns(self):
         # todo: let user override this in the configuration
         return (self._window_size[0] - 8 - 1) // 4
