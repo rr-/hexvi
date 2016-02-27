@@ -35,7 +35,7 @@ class FileState(object):
 
     def get_visible_columns(self):
         # todo: let user override this in the configuration
-        return (self._window_size[0] - 8 - 1 - 1 - 1) // 4
+        return (self._window_size[0] - 8 - 1) // 4
 
     def get_pane(self):
         return self._pane
