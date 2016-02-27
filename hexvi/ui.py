@@ -38,8 +38,8 @@ class Dump(urwid.BoxWidget):
             row_offset = self._file_state.top_offset + i * self._file_state.visible_columns
             buffer = self._file_state.file_buffer.get_content_range(row_offset, self._file_state.visible_columns)
             off_lines.append((b'%08x' % row_offset if row_offset - 1 < self._file_state.size else b''))
-            hex_lines.append(b''.join(b'%02x ' % c for c in buffer))
-            asc_lines.append(b''.join(b'%c' % c if c >= 32 and c < 127 else b'.' for c in buffer))
+            hex_lines.append(b''.join(b'%02x ' % c for c in buffer) + b' ')
+            asc_lines.append(b''.join(b'%c' % c if c >= 32 and c < 127 else b'.' for c in buffer) + b' ')
 
         relative_cursor_offset = self._file_state.cur_offset - self._file_state.top_offset
         cursor_pos = (
@@ -104,7 +104,7 @@ class StatusBar(urwid.Widget):
         right = '0x%X / 0x%X (%d%%)' % (
             self._app_state.cur_file.cur_offset,
             self._app_state.cur_file.size,
-            self._app_state.cur_file.cur_offset * 100.0 / self._app_state.cur_file.size)
+            self._app_state.cur_file.cur_offset * 100.0 / max(1, self._app_state.cur_file.size))
 
         left = '[%s] ' % self._app_state.mode.upper()
         left += trim_left(
