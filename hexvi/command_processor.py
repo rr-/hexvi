@@ -10,6 +10,13 @@ class Command(object):
         self.names = names
         self.func = func
 
+class SearchState(object):
+    DIR_BACKWARD = 0
+    DIR_FORWARD = 1
+    def __init__(self):
+        self.dir = None
+        self.text = None
+
 def cmd(names):
     def decorator(func):
         return Command(names, func)
@@ -18,6 +25,7 @@ def cmd(names):
 class CommandProcessor(object):
     def __init__(self, app_state):
         self._app_state = app_state
+        self._search_state = SearchState()
         self._commands = []
         for x in dir(self):
             if x.startswith('cmd_'):
@@ -92,26 +100,34 @@ class CommandProcessor(object):
         self._app_state.normal_mode_mappings.compile()
 
     @cmd(names=['search'])
-    def cmd_search_forward(self, text):
-        self._app_state.search.dir = self._app_state.search.DIR_FORWARD
-        self._app_state.search.text = text
-        match = regex.search(
-            text.encode('utf-8'),
-            self._app_state.cur_file.file_buffer.get_content(),
-            pos=self._app_state.cur_file.cur_offset + 1)
-        if not match:
-            #todo: if an option is enabled, show info and wrap around
-            raise RuntimeError('Not found')
-        self._app_state.cur_file.cur_offset = match.span()[0]
+    def cmd_search_forward(self, text=''):
+        self._perform_search(SearchState.DIR_FORWARD, text)
 
     @cmd(names=['rsearch'])
-    def cmd_search_backward(self, text):
-        self._app_state.search.dir = self._app_state.search.DIR_BACKWARD
-        self._app_state.search.text = text
-        match = regex.search(
-            b'(?r)' + text.encode('utf-8'),
-            self._app_state.cur_file.file_buffer.get_content(),
-            endpos=self._app_state.cur_file.cur_offset)
+    def cmd_search_backward(self, text=''):
+        self._perform_search(SearchState.DIR_BACKWARD, text)
+
+    def _perform_search(self, dir, text):
+        if not text:
+            text = self._search_state.text
+            dir = self._search_state.dir ^ dir ^ 1
+        else:
+            self._search_state.dir = dir
+            self._search_state.text = text
+
+        if dir == SearchState.DIR_BACKWARD:
+            match = regex.search(
+                b'(?r)' + text.encode('utf-8'),
+                self._app_state.cur_file.file_buffer.get_content(),
+                endpos=self._app_state.cur_file.cur_offset)
+        elif dir == SearchState.DIR_FORWARD:
+            match = regex.search(
+                text.encode('utf-8'),
+                self._app_state.cur_file.file_buffer.get_content(),
+                pos=self._app_state.cur_file.cur_offset + 1)
+        else:
+            assert False, 'Bad search direction'
+
         if not match:
             #todo: if an option is enabled, show info and wrap around
             raise RuntimeError('Not found')

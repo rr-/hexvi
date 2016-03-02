@@ -13,14 +13,6 @@ class ModeChangeEvent(object):
         self.mode = mode
         self.char = char
 
-class SearchState(object):
-    DIR_BACKWARD = '-'
-    DIR_FORWARD = '+'
-
-    def __init__(self):
-        self.dir = None
-        self.text = None
-
 class AppState(object):
     MODE_NORMAL = 'normal'
     MODE_COMMAND = 'command'
@@ -41,7 +33,6 @@ class AppState(object):
         # todo: manage this once we get multiple files support
         self._cur_file = FileState(args.file)
 
-        self.search = SearchState()
         self.normal_mode_mappings = MappingCollection()
 
         self.exec('nmap', 'h',              ':jump_by_bytes -1')
@@ -67,6 +58,8 @@ class AppState(object):
         self.exec('nmap', '$',              ':jump_to_end_of_line')
         self.exec('nmap', '{tab}',          ':toggle_pane')
         self.exec('nmap', '<ctrl q>',       ':quit')
+        self.exec('nmap', 'n',              ':search')
+        self.exec('nmap', 'N',              ':rsearch')
 
         for key, mode in self.MODE_KEY_MAP.items():
             self.nmap([key], (lambda m, k: lambda: self.set_mode(m, k))(mode, key))
