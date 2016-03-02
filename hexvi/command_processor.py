@@ -1,6 +1,6 @@
 import zope.event
 import shlex
-import re
+import regex
 
 class ProgramExitEvent(object):
     pass
@@ -44,7 +44,7 @@ class CommandProcessor(object):
     @cmd(names=['jump_to'])
     def cmd_jump_to(self, offset):
         offset = int(offset, 16)
-        self._app_state.cur_file.set_cur_offset(offset)
+        self._app_state.cur_file.cur_offset = offset
 
     @cmd(names=['jump_by_bytes'])
     def cmd_jump_by_bytes(self, offset='1'):
@@ -73,27 +73,52 @@ class CommandProcessor(object):
 
     @cmd(names=['jump_to_start_of_file'])
     def cmd_jump_to_start_of_file(self):
-        self._app_state.cur_file.set_cur_offset(0)
+        self._app_state.cur_file.cur_offset = 0
 
     @cmd(names=['jump_to_end_of_file'])
     def cmd_jump_to_end_of_file(self):
-        self._app_state.cur_file.set_cur_offset(self._app_state.cur_file.size)
+        self._app_state.cur_file.cur_offset = self._app_state.cur_file.size
 
     @cmd(names=['nmap'])
     def cmd_map_for_normal_mode(self, key_sequence_str, binding):
-        key_sequence = re.findall('({[^}]*}|<[^>]*>|[^<>{}])', key_sequence_str)
-        key_sequence = [re.sub('[{}<>]', '', x) for x in key_sequence]
+        key_sequence = regex.findall('({[^}]*}|<[^>]*>|[^<>{}])', key_sequence_str)
+        key_sequence = [regex.sub('[{}<>]', '', x) for x in key_sequence]
         if not binding:
             raise RuntimeError('Empty binding')
         if binding[0] != ':':
             raise RuntimeError('Only command-based bindings are supported')
         self._app_state.normal_mode_mappings.add(
             key_sequence, lambda *args: self._exec_via_binding(binding, *args))
-
         self._app_state.normal_mode_mappings.compile()
+
+    @cmd(names=['search'])
+    def cmd_search_forward(self, text):
+        self._app_state.search.dir = self._app_state.search.DIR_FORWARD
+        self._app_state.search.text = text
+        match = regex.search(
+            text.encode('utf-8'),
+            self._app_state.cur_file.file_buffer.get_content(),
+            pos=self._app_state.cur_file.cur_offset + 1)
+        if not match:
+            #todo: if an option is enabled, show info and wrap around
+            raise RuntimeError('Not found')
+        self._app_state.cur_file.cur_offset = match.span()[0]
+
+    @cmd(names=['rsearch'])
+    def cmd_search_backward(self, text):
+        self._app_state.search.dir = self._app_state.search.DIR_BACKWARD
+        self._app_state.search.text = text
+        match = regex.search(
+            b'(?r)' + text.encode('utf-8'),
+            self._app_state.cur_file.file_buffer.get_content(),
+            endpos=self._app_state.cur_file.cur_offset)
+        if not match:
+            #todo: if an option is enabled, show info and wrap around
+            raise RuntimeError('Not found')
+        self._app_state.cur_file.cur_offset = match.span()[0]
 
     def _exec_via_binding(self, binding, *args_from_mapping):
         command, *args = shlex.split(binding[1:])
         for i in range(len(args)):
-            args[i] = re.sub('{arg(\d)}', lambda m: args_from_mapping[int(m.groups()[0])], args[i])
+            args[i] = regex.sub('\{arg(\d)\}', lambda m: args_from_mapping[int(m.groups()[0])], args[i])
         return self.exec(command, *args)

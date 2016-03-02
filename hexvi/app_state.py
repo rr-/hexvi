@@ -13,6 +13,14 @@ class ModeChangeEvent(object):
         self.mode = mode
         self.char = char
 
+class SearchState(object):
+    DIR_BACKWARD = '-'
+    DIR_FORWARD = '+'
+
+    def __init__(self):
+        self.dir = None
+        self.text = None
+
 class AppState(object):
     MODE_NORMAL = 'normal'
     MODE_COMMAND = 'command'
@@ -33,6 +41,7 @@ class AppState(object):
         # todo: manage this once we get multiple files support
         self._cur_file = FileState(args.file)
 
+        self.search = SearchState()
         self.normal_mode_mappings = MappingCollection()
 
         self.exec('nmap', 'h',              ':jump_by_bytes -1')
@@ -72,6 +81,10 @@ class AppState(object):
         if self.mode == self.MODE_COMMAND:
             command, *args = shlex.split(text)
             self.exec(command, *args)
+        elif self.mode == self.MODE_SEARCH_FORWARD:
+            self.exec('search', text)
+        elif self.mode == self.MODE_SEARCH_BACKWARD:
+            self.exec('rsearch', text)
         else:
             raise NotImplementedError(text)
 
