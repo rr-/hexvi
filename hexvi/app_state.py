@@ -3,6 +3,7 @@ from .mappings import MappingCollection
 from .command_processor import CommandProcessor
 import zope.event
 import shlex
+import os
 
 class FileBufferChangeEvent(object):
     def __init__(self, file_buffer):
@@ -35,32 +36,7 @@ class AppState(object):
 
         self.normal_mode_mappings = MappingCollection()
 
-        self.exec('nmap', 'h',              ':jump_by_bytes -1')
-        self.exec('nmap', 'j',              ':jump_by_lines 1')
-        self.exec('nmap', 'k',              ':jump_by_lines -1')
-        self.exec('nmap', 'l',              ':jump_by_bytes 1')
-        self.exec('nmap', '<left>',         ':jump_by_bytes -1')
-        self.exec('nmap', '<down>',         ':jump_by_lines 1')
-        self.exec('nmap', '<up>',           ':jump_by_lines -1')
-        self.exec('nmap', '<right>',        ':jump_by_bytes 1')
-        self.exec('nmap', '{dec}h',         ':jump_by_bytes -{arg0}')
-        self.exec('nmap', '{dec}j',         ':jump_by_lines {arg0}')
-        self.exec('nmap', '{dec}k',         ':jump_by_lines -{arg0}')
-        self.exec('nmap', '{dec}l',         ':jump_by_bytes {arg0}')
-        self.exec('nmap', '{dec}<left>',    ':jump_by_bytes -{arg0}')
-        self.exec('nmap', '{dec}<down>',    ':jump_by_lines {arg0}')
-        self.exec('nmap', '{dec}<up>',      ':jump_by_lines -{arg0}')
-        self.exec('nmap', '{dec}<right>',   ':jump_by_bytes {arg0}')
-        self.exec('nmap', '{hex}G',         ':jump_to {arg0}')
-        self.exec('nmap', 'gg',             ':jump_to_start_of_file')
-        self.exec('nmap', 'G',              ':jump_to_end_of_file')
-        self.exec('nmap', '^',              ':jump_to_start_of_line')
-        self.exec('nmap', '$',              ':jump_to_end_of_line')
-        self.exec('nmap', '{tab}',          ':toggle_pane')
-        self.exec('nmap', '<ctrl q>',       ':quit')
-        self.exec('nmap', 'n',              ':search')
-        self.exec('nmap', 'N',              ':rsearch')
-
+        self.exec('source', os.path.join(os.path.dirname(__file__), 'share', 'hexvirc'))
         for key, mode in self.MODE_KEY_MAP.items():
             self.nmap([key], (lambda m, k: lambda: self.set_mode(m, k))(mode, key))
 

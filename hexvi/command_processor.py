@@ -107,6 +107,12 @@ class CommandProcessor(object):
     def cmd_search_backward(self, text=''):
         self._perform_search(SearchState.DIR_BACKWARD, text)
 
+    @cmd(names=['so', 'source'])
+    def cmd_source(self, path):
+        for line in open(path, 'r'):
+            command, *args = shlex.split(line)
+            self.exec(command, *args)
+
     def _perform_search(self, dir, text):
         if not text:
             text = self._search_state.text

@@ -9,7 +9,7 @@ setup(
     license          = 'MIT',
 
     packages         = find_packages(),
-    package_data     = {'': ['data/*']},
+    package_data     = {'': ['share/*']},
 
     entry_points     = {
         'console_scripts': [
