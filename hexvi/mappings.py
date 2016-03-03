@@ -116,7 +116,7 @@ class MappingCollection(object):
         else:
             for traversal in traversals:
                 if traversal.node.func:
-                    traversal.node.func(*traversal.args)
+                    traversal.node.func(traversal)
                     self.reset()
                     return True
         return False

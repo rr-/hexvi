@@ -6,9 +6,10 @@ class ProgramExitEvent(object):
     pass
 
 class Command(object):
-    def __init__(self, names, func):
+    def __init__(self, names, func, use_traversal):
         self.names = names
         self.func = func
+        self.use_traversal = use_traversal
 
 class SearchState(object):
     DIR_BACKWARD = 0
@@ -17,9 +18,9 @@ class SearchState(object):
         self.dir = None
         self.text = None
 
-def cmd(names):
+def cmd(names, use_traversal=False):
     def decorator(func):
-        return Command(names, func)
+        return Command(names, func, use_traversal)
     return decorator
 
 class CommandProcessor(object):
@@ -31,10 +32,13 @@ class CommandProcessor(object):
             if x.startswith('cmd_'):
                 self._commands.append(getattr(self, x))
 
-    def exec(self, cmd_name, *args):
+    def exec(self, cmd_name, *args, traversal=None):
         for cmd in self._commands:
             if cmd_name in cmd.names:
-                return cmd.func(self, *args)
+                if cmd.use_traversal:
+                    return cmd.func(self, *args, traversal=traversal)
+                else:
+                    return cmd.func(self, *args)
         raise RuntimeError('Unknown command: ' + cmd_name)
 
     @cmd(names=['q', 'quit'])
@@ -96,7 +100,7 @@ class CommandProcessor(object):
         if binding[0] != ':':
             raise RuntimeError('Only command-based bindings are supported')
         self._app_state.normal_mode_mappings.add(
-            key_sequence, lambda *args: self._exec_via_binding(binding, *args))
+            key_sequence, lambda traversal: self._exec_via_binding(binding, traversal))
         self._app_state.normal_mode_mappings.compile()
 
     @cmd(names=['search'])
@@ -139,8 +143,8 @@ class CommandProcessor(object):
             raise RuntimeError('Not found')
         self._app_state.cur_file.cur_offset = match.span()[0]
 
-    def _exec_via_binding(self, binding, *args_from_mapping):
+    def _exec_via_binding(self, binding, traversal):
         command, *args = shlex.split(binding[1:])
         for i in range(len(args)):
-            args[i] = regex.sub('\{arg(\d)\}', lambda m: args_from_mapping[int(m.groups()[0])], args[i])
-        return self.exec(command, *args)
+            args[i] = regex.sub('\{arg(\d)\}', lambda m: traversal.args[int(m.groups()[0])], args[i])
+        return self.exec(command, *args, traversal=traversal)

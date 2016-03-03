@@ -38,7 +38,7 @@ class AppState(object):
 
         self.exec('source', os.path.join(os.path.dirname(__file__), 'share', 'hexvirc'))
         for key, mode in self.MODE_KEY_MAP.items():
-            self.nmap([key], (lambda m, k: lambda: self.set_mode(m, k))(mode, key))
+            self.nmap([key], (lambda m, k: lambda traversal: self.set_mode(m, k))(mode, key))
 
     def keypress(self, key):
         return self.normal_mode_mappings.keypress(key)
