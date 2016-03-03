@@ -10,12 +10,14 @@ class Node(object):
         Node.__id += 1
 
 class NodeTraversal(object):
-    def __init__(self, node, parent_traversal = None):
+    def __init__(self, node, parent_traversal=None, symbol=None):
         self.node = node
         if parent_traversal:
             self.args = parent_traversal.args + []
+            self.path = parent_traversal.path + [symbol]
         else:
             self.args = []
+            self.path = [symbol] if symbol is not None else []
 
 class NFA(object):
     def __init__(self):
@@ -58,7 +60,7 @@ class NFATraverser(object):
         return target_traversals
 
     def _extend_traversal(self, source_traversal, target_node, symbol):
-        res = NodeTraversal(target_node, source_traversal)
+        res = NodeTraversal(target_node, source_traversal, symbol)
         if target_node.arg_proxy:
             if source_traversal.node.id != target_node.id:
                 res.args.append('')
