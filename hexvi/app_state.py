@@ -10,21 +10,21 @@ class FileBufferChangeEvent(object):
         self.file_buffer = file_buffer
 
 class ModeChangeEvent(object):
-    def __init__(self, mode, char=None):
+    def __init__(self, mode, traversal):
+        self.traversal = traversal
         self.mode = mode
-        self.char = char
 
 class AppState(object):
     MODE_NORMAL = 'normal'
     MODE_COMMAND = 'command'
     MODE_SEARCH_FORWARD = 'search'
-    MODE_SEARCH_BACKWARD = 'rev-search'
+    MODE_SEARCH_BACKWARD = 'rsearch'
 
-    MODE_KEY_MAP = {
-        ':': MODE_COMMAND,
-        '/': MODE_SEARCH_FORWARD,
-        '?': MODE_SEARCH_BACKWARD,
-    }
+    ALL_MODES = [
+        MODE_NORMAL,
+        MODE_COMMAND,
+        MODE_SEARCH_FORWARD,
+        MODE_SEARCH_BACKWARD]
 
     def __init__(self, args):
         self._window_size = (0, 0)
@@ -35,16 +35,10 @@ class AppState(object):
         self._cur_file = FileState(args.file)
 
         self.normal_mode_mappings = MappingCollection()
-
         self.exec('source', os.path.join(os.path.dirname(__file__), 'share', 'hexvirc'))
-        for key, mode in self.MODE_KEY_MAP.items():
-            self.nmap([key], (lambda m, k: lambda traversal: self.set_mode(m, k))(mode, key))
 
     def keypress(self, key):
         return self.normal_mode_mappings.keypress(key)
-
-    def nmap(self, key_sequence, command):
-        self.normal_mode_mappings.add(key_sequence, command)
 
     def accept_raw_input(self, text):
         if self.mode == self.MODE_COMMAND:
@@ -79,10 +73,10 @@ class AppState(object):
     def get_mode(self):
         return self._mode
 
-    def set_mode(self, value, char=None):
+    def set_mode(self, value, traversal=None):
         if value != self._mode:
             self._mode = value
-            zope.event.notify(ModeChangeEvent(value, char))
+            zope.event.notify(ModeChangeEvent(value, traversal))
 
     cur_file = property(get_cur_file)
     mode = property(get_mode, set_mode)

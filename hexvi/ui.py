@@ -158,7 +158,8 @@ class MainWindow(urwid.Frame):
             self._console.prompt = ''
             self.focus.set_focus(0)
         else:
-            self._console.prompt = evt.char or ''
+            self._console.prompt = ''.join(evt.traversal.path) if evt.traversal else '>'
+            self._console.edit_text = ''
             self.focus.set_focus(2)
 
     def _make_header(self):

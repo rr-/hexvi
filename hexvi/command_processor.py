@@ -117,6 +117,10 @@ class CommandProcessor(object):
             command, *args = shlex.split(line)
             self.exec(command, *args)
 
+    @cmd(names=['mode'], use_traversal=True)
+    def cmd_mode(self, mode, traversal):
+        self._app_state.set_mode(mode, traversal)
+
     def _perform_search(self, dir, text):
         if not text:
             text = self._search_state.text

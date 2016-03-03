@@ -1,3 +1,6 @@
+nmap /              ':mode search'
+nmap ?              ':mode rsearch'
+nmap :              ':mode command'
 nmap h              ':jump_by_bytes -1'
 nmap j              ':jump_by_lines 1'
 nmap k              ':jump_by_lines -1'
