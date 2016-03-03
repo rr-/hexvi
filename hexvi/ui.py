@@ -82,8 +82,6 @@ class Console(ReadlineEdit):
             return None
         if key == 'enter':
             self._app_state.accept_raw_input(self.edit_text)
-            self.edit_text = ''
-            self._app_state.mode = AppState.MODE_NORMAL
         return super().keypress(pos, key)
 
     def get_prompt(self):

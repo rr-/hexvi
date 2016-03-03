@@ -35,24 +35,24 @@ class AppState(object):
         self._cur_file = FileState(args.file)
 
         self.normal_mode_mappings = MappingCollection()
-        self.exec('source', os.path.join(os.path.dirname(__file__), 'share', 'hexvirc'))
+        self._command_processor.exec(
+            'source', os.path.join(os.path.dirname(__file__), 'share', 'hexvirc'))
 
     def keypress(self, key):
         return self.normal_mode_mappings.keypress(key)
 
     def accept_raw_input(self, text):
-        if self.mode == self.MODE_COMMAND:
+        mode = self.mode
+        self.mode = AppState.MODE_NORMAL
+        if mode == self.MODE_COMMAND:
             command, *args = shlex.split(text)
-            self.exec(command, *args)
-        elif self.mode == self.MODE_SEARCH_FORWARD:
-            self.exec('search', text)
-        elif self.mode == self.MODE_SEARCH_BACKWARD:
-            self.exec('rsearch', text)
+            self._command_processor.exec(command, *args)
+        elif mode == self.MODE_SEARCH_FORWARD:
+            self._command_processor.exec('search', text)
+        elif mode == self.MODE_SEARCH_BACKWARD:
+            self._command_processor.exec('rsearch', text)
         else:
             raise NotImplementedError(text)
-
-    def exec(self, command, *args):
-        self._command_processor.exec(command, *args)
 
     def get_window_size(self):
         return self._window_size
