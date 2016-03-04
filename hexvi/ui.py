@@ -4,6 +4,7 @@ from .command_processor import ProgramExitEvent
 from .app_state import AppState
 from .events import ModeChangeEvent
 from .events import OffsetChangeEvent
+from .events import PrintMessageEvent
 from .events import WindowSizeChangeEvent
 from .file_state import PaneChangeEvent
 from .readline_edit import ReadlineEdit
@@ -192,6 +193,7 @@ class MainWindow(urwid.Frame):
       ]),
       urwid.AttrMap(self._header, 'header'))
 
+    zope.event.classhandler.handler(PrintMessageEvent, self._message_requested)
     zope.event.classhandler.handler(ModeChangeEvent, self._mode_changed)
 
   def get_caption(self):
@@ -200,6 +202,10 @@ class MainWindow(urwid.Frame):
   def set_caption(self, value):
     self._header.base_widget.set_text(
       'hexvi' if not value else 'hexvi - ' + value)
+
+  def _message_requested(self, evt):
+    self._console.prompt = evt.message
+    self._console.edit_text = ''
 
   def _mode_changed(self, evt):
     self._console.edit_text = ''

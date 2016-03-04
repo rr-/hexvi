@@ -1,6 +1,7 @@
 import zope.event
 import shlex
 import regex
+from .events import PrintMessageEvent
 
 class ProgramExitEvent(object):
   pass
@@ -25,13 +26,16 @@ class CommandProcessor(object):
         self._commands.append(getattr(self, x))
 
   def exec(self, cmd_name, *args, traversal=None):
-    for cmd in self._commands:
-      if cmd_name in cmd.names:
-        if cmd.use_traversal:
-          return cmd.func(self, *args, traversal=traversal)
-        else:
-          return cmd.func(self, *args)
-    raise RuntimeError('Unknown command: ' + cmd_name)
+    try:
+      for cmd in self._commands:
+        if cmd_name in cmd.names:
+          if cmd.use_traversal:
+            return cmd.func(self, *args, traversal=traversal)
+          else:
+            return cmd.func(self, *args)
+      raise RuntimeError('Unknown command: ' + cmd_name)
+    except RuntimeError as ex:
+      zope.event.notify(PrintMessageEvent(str(ex)))
 
   @cmd(names=['q', 'quit'])
   def cmd_exit(self):

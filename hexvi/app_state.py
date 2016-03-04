@@ -1,11 +1,11 @@
+import os
+import shlex
+import zope.event
 from .file_state import FileState
 from .events import WindowSizeChangeEvent
 from .events import ModeChangeEvent
 from .mappings import MappingCollection
 from .command_processor import CommandProcessor
-import zope.event
-import shlex
-import os
 
 class SearchState(object):
   DIR_BACKWARD = 0

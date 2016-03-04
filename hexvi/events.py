@@ -1,3 +1,7 @@
+class PrintMessageEvent(object):
+  def __init__(self, message):
+    self.message = message
+
 class FileBufferChangeEvent(object):
   def __init__(self, file_buffer):
     self.file_buffer = file_buffer
