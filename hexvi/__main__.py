@@ -1,6 +1,6 @@
 #!/bin/python3
+import os
 import argparse
-
 from .app_state import AppState
 from .ui import Ui
 
@@ -13,7 +13,10 @@ def parse_args():
 def main():
   args = parse_args()
   app_state = AppState(args)
-  Ui(app_state).run()
+  ui = Ui(app_state)
+  app_state.cmd_processor.exec(
+    'source', os.path.join(app_state.resources_dir, 'hexvirc'))
+  ui.run()
 
 if __name__ == '__main__':
   main()

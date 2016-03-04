@@ -34,3 +34,5 @@ nmap n                    ':search'
 nmap N                    ':rsearch'
 nmap {dec}n               ':search "" {arg0}'
 nmap {dec}N               ':rsearch "" {arg0}'
+
+colorscheme monochrome

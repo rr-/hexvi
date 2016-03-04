@@ -1,6 +1,7 @@
 import sys
 import regex
 from .app_state import AppState
+from .events import ColorChangeEvent
 from .events import ModeChangeEvent
 from .events import OffsetChangeEvent
 from .events import PaneChangeEvent
@@ -234,26 +235,26 @@ class MainWindow(urwid.Frame):
 class Ui(object):
   def __init__(self, app_state):
     self._app_state = app_state
-
-  def run(self):
     self._main_window = MainWindow(self._app_state)
     self._app_state.mode = AppState.MODE_NORMAL
 
     zope.event.classhandler.handler(
       ProgramExitEvent, lambda *args: self._exit())
+    zope.event.classhandler.handler(ColorChangeEvent, self._color_changed)
 
     # todo: subscribe to changes of app_sate.cur_file
     self._main_window.caption = self._app_state.cur_file.file_buffer.path
 
-    urwid.MainLoop(
-      self._main_window,
-      palette=[
-        ('selected', 'light red', ''),
-        ('header', 'standout', ''),
-        ('search', 'standout', ''),
-        ('status', 'standout', ''),
-      ],
-      unhandled_input=self._key_pressed).run()
+    self._loop = urwid.MainLoop(
+      self._main_window, unhandled_input=self._key_pressed)
+
+  def run(self):
+    self._loop.run()
+
+  def _color_changed(self, evt):
+    scr = self._loop.screen
+    scr.register_palette_entry(evt.target, evt.fg_style, evt.bg_style)
+    scr.clear()
 
   def _exit(self):
     raise urwid.ExitMainLoop()

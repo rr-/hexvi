@@ -1,6 +1,8 @@
+import os
 import regex
 import shlex
 import zope.event
+from .events import ColorChangeEvent
 from .events import PrintMessageEvent
 from .events import ProgramExitEvent
 
@@ -127,9 +129,24 @@ class CommandProcessor(object):
         command, *args = result
         self.exec(command, *args)
 
+  @cmd(names=['colorscheme'])
+  def cmd_colorscheme(self, path):
+    search_paths = [path, os.path.splitext(path)[0]+'.hexvi']
+    for full_path in search_paths[:]:
+      search_paths.append(
+        os.path.join(self._app_state.resources_dir, 'themes', full_path))
+    for full_path in search_paths:
+      if os.path.exists(full_path):
+        return self.cmd_source.func(self, full_path)
+    raise RuntimeError(path + ' not found (looked in %r)' % search_paths)
+
   @cmd(names=['mode'], use_traversal=True)
   def cmd_mode(self, mode, traversal):
     self._app_state.set_mode(mode, traversal)
+
+  @cmd(names=['hi', 'highlight'])
+  def cmd_highlight(self, target, bg_style, fg_style):
+    zope.event.notify(ColorChangeEvent(target, bg_style, fg_style))
 
   def _perform_search(self, dir, text):
     if not text:

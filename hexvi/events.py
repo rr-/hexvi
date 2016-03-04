@@ -23,5 +23,11 @@ class PaneChangeEvent(object):
   def __init__(self, file_state):
     self.file_state = file_state
 
+class ColorChangeEvent(object):
+  def __init__(self, target, fg_style, bg_style):
+    self.target = target
+    self.bg_style = bg_style
+    self.fg_style = fg_style
+
 class ProgramExitEvent(object):
   pass

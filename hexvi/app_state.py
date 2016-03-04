@@ -29,26 +29,26 @@ class AppState(object):
   def __init__(self, args):
     self._window_size = (0, 0)
     self._mode = AppState.MODE_COMMAND
-    self._command_processor = CommandProcessor(self)
+    self.cmd_processor = CommandProcessor(self)
 
     # todo: manage this once we get multiple files support
     self._cur_file = FileState(args.file)
 
     self.search_state = SearchState()
     self.normal_mode_mappings = MappingCollection()
-    self._command_processor.exec(
-      'source', os.path.join(os.path.dirname(__file__), 'share', 'hexvirc'))
+    self.hexvi_dir = os.path.dirname(__file__)
+    self.resources_dir = os.path.join(self.hexvi_dir, 'share')
 
   def accept_raw_input(self, text):
     mode = self.mode
     self.mode = AppState.MODE_NORMAL
     if mode == self.MODE_COMMAND:
       command, *args = shlex.split(text)
-      self._command_processor.exec(command, *args)
+      self.cmd_processor.exec(command, *args)
     elif mode == self.MODE_SEARCH_FORWARD:
-      self._command_processor.exec('search', text)
+      self.cmd_processor.exec('search', text)
     elif mode == self.MODE_SEARCH_BACKWARD:
-      self._command_processor.exec('rsearch', text)
+      self.cmd_processor.exec('rsearch', text)
     else:
       raise NotImplementedError(text)
 

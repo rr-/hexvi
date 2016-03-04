@@ -1,4 +1,9 @@
 from setuptools import setup, find_packages
+import os
+
+data_files = []
+for root, dirs, files in os.walk('hexvi/share'):
+  data_files.append((root, list(os.path.join(root, file) for file in files)))
 
 setup(
     name             = 'hexvi',
@@ -9,7 +14,7 @@ setup(
     license          = 'MIT',
 
     packages         = find_packages(),
-    package_data     = {'': ['share/*']},
+    data_files       = data_files,
 
     entry_points     = {
         'console_scripts': [
