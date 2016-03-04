@@ -23,9 +23,6 @@ def trim_left(text, size):
 def is_ascii(c):
   return c >= 32 and c < 127
 
-def format_ascii(c):
-  return '%c' % c if is_ascii(c) else '.'
-
 class Dump(urwid.BoxWidget):
   def __init__(self, app_state, file_state):
     self._app_state = app_state
@@ -51,10 +48,9 @@ class Dump(urwid.BoxWidget):
     for i in range(height):
       row_offset = top_off + i * vis_col
       row_buffer = buffer[i*vis_col:(i+1)*vis_col]
-      off_lines.append(
-        '%08x' % row_offset if row_offset - 1 < self._file_state.size else '')
-      hex_lines.append(''.join('%02x ' % c for c in row_buffer))
-      asc_lines.append(''.join(format_ascii(c) for c in row_buffer))
+      off_lines.append(self._format_offset_row(row_offset))
+      hex_lines.append(self._format_hex_row(row_buffer))
+      asc_lines.append(self._format_asc_row(row_buffer))
 
     off_lines = [l.encode('utf-8') for l in off_lines]
     hex_lines = [(l + ' ').encode('utf-8') for l in hex_lines]
@@ -78,12 +74,9 @@ class Dump(urwid.BoxWidget):
           rel_cur_off = m.start() + i - search_buffer_shift
           y = rel_cur_off // vis_col
           x = rel_cur_off % vis_col
-          if y >= 0:
-            try:
-              asc_hilight[y][x] = ('search', 1)
-              hex_hilight[y][x] = ('search', 3)
-            except IndexError:
-              continue
+          if y >= 0  and y < height:
+            asc_hilight[y][x] = ('search', 1)
+            hex_hilight[y][x] = ('search', 3)
 
     rel_cur_off = cur_off - top_off
     cursor_pos = (rel_cur_off % vis_col, rel_cur_off // vis_col)
@@ -105,12 +98,22 @@ class Dump(urwid.BoxWidget):
       canvas_def[1][0].cursor = cursor_pos
 
     multi_canvas = urwid.CanvasJoin(canvas_def)
-    if multi_canvas.cols() < width:
-      multi_canvas.pad_trim_left_right(0, width - multi_canvas.cols())
+    multi_canvas.pad_trim_left_right(0, width - multi_canvas.cols())
     return multi_canvas
 
   def keypress(self, pos, key):
     return key
+
+  def _format_offset_row(self, offset):
+    if offset - 1 < self._file_state.size:
+      return '%08x' % offset
+    return ''
+
+  def _format_asc_row(self, buffer):
+    return ''.join('%c' % c if is_ascii(c) else '.' for c in buffer)
+
+  def _format_hex_row(self, buffer):
+    return ''.join('%02x ' % c for c in buffer)
 
 class Console(ReadlineEdit):
   def __init__(self, app_state, *args, **kwargs):
