@@ -1,5 +1,5 @@
 import sys
-import re
+import regex
 from .command_processor import ProgramExitEvent
 from .app_state import AppState, WindowSizeChangeEvent, ModeChangeEvent
 from .file_state import PaneChangeEvent, OffsetChangeEvent
@@ -38,26 +38,55 @@ class Dump(urwid.BoxWidget):
   def render(self, size, focus=False):
     self._app_state.window_size = size
     width, height = size
-    vis_columns = self._file_state.visible_columns
 
+    cur_off = self._file_state.cur_offset
+    top_off = self._file_state.top_offset
+    vis_col = self._file_state.visible_columns
+
+    buffer = self._file_state.file_buffer.get_content_range(
+      top_off, vis_col * height)
     off_lines = []
     hex_lines = []
     asc_lines = []
     for i in range(height):
-      row_offset = self._file_state.top_offset + i * vis_columns
-      buffer = self._file_state.file_buffer.get_content_range(
-        row_offset, vis_columns)
+      row_offset = top_off + i * vis_col
+      row_buffer = buffer[i*vis_col:(i+1)*vis_col]
       off_lines.append(
         '%08x' % row_offset if row_offset - 1 < self._file_state.size else '')
-      hex_lines.append(''.join('%02x ' % c for c in buffer))
-      asc_lines.append(''.join(format_ascii(c) for c in buffer))
+      hex_lines.append(''.join('%02x ' % c for c in row_buffer))
+      asc_lines.append(''.join(format_ascii(c) for c in row_buffer))
 
     off_lines = [l.encode('utf-8') for l in off_lines]
     hex_lines = [(l + ' ').encode('utf-8') for l in hex_lines]
     asc_lines = [(l + ' ').encode('utf-8') for l in asc_lines]
 
-    rel_cur_offset = self._file_state.cur_offset - self._file_state.top_offset
-    cursor_pos = (rel_cur_offset % vis_columns, rel_cur_offset // vis_columns)
+    hex_hilight = [[] for l in asc_lines]
+    asc_hilight = [[] for l in asc_lines]
+
+    if self._app_state.search_state.text:
+      hex_hilight = [[(None, 3) for i in range(vis_col)] for l in hex_lines]
+      asc_hilight = [[(None, 1) for i in range(vis_col)] for l in asc_lines]
+      half_page = vis_col * height // 2
+      search_buffer_off = max(top_off - half_page, 0)
+      search_buffer_shift = top_off - search_buffer_off
+      search_buffer_size = search_buffer_shift + vis_col * height + half_page
+      search_buffer = self._file_state.file_buffer.get_content_range(
+        search_buffer_off, search_buffer_size)
+      pattern = self._app_state.search_state.text.encode('utf8')
+      for m in regex.finditer(pattern, search_buffer):
+        for i in range(len(m.group())):
+          rel_cur_off = m.start() + i - search_buffer_shift
+          y = rel_cur_off // vis_col
+          x = rel_cur_off % vis_col
+          if y >= 0:
+            try:
+              asc_hilight[y][x] = ('search', 1)
+              hex_hilight[y][x] = ('search', 3)
+            except IndexError:
+              continue
+
+    rel_cur_off = cur_off - top_off
+    cursor_pos = (rel_cur_off % vis_col, rel_cur_off // vis_col)
     if self._file_state.pane == self._file_state.PANE_HEX:
       cursor_pos = (cursor_pos[0] * 3, cursor_pos[1])
 
@@ -67,8 +96,8 @@ class Dump(urwid.BoxWidget):
       canvas_def.append((widget, Dump.pos, False, width))
       Dump.pos += width
     append(urwid.TextCanvas(off_lines), 9, False)
-    append(urwid.TextCanvas(hex_lines), vis_columns * 3, True)
-    append(urwid.TextCanvas(asc_lines), vis_columns, False)
+    append(urwid.TextCanvas(hex_lines, hex_hilight), vis_col * 3, True)
+    append(urwid.TextCanvas(asc_lines, asc_hilight), vis_col, False)
 
     if self._file_state.pane == self._file_state.PANE_ASC:
       canvas_def[2][0].cursor = cursor_pos
@@ -160,7 +189,7 @@ class MainWindow(urwid.Frame):
     zope.event.classhandler.handler(ModeChangeEvent, self._mode_changed)
 
   def get_caption(self):
-    return re.sub('^hexvi( - )?', '', self._header.base_widget.get_text()[0])
+    return regex.sub('^hexvi( - )?', '', self._header.base_widget.get_text()[0])
 
   def set_caption(self, value):
     self._header.base_widget.set_text(
@@ -209,6 +238,7 @@ class Ui(object):
       palette=[
         ('selected', 'light red', ''),
         ('header', 'standout', ''),
+        ('search', 'standout', ''),
         ('status', 'standout', ''),
       ],
       unhandled_input=self._key_pressed).run()
