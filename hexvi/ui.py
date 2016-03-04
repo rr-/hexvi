@@ -247,13 +247,19 @@ class Ui(object):
 
     self._loop = urwid.MainLoop(
       self._main_window, unhandled_input=self._key_pressed)
+    self._loop.screen.set_terminal_properties(256) #TODO: configurable
 
   def run(self):
     self._loop.run()
 
   def _color_changed(self, evt):
     scr = self._loop.screen
-    scr.register_palette_entry(evt.target, evt.fg_style, evt.bg_style)
+    scr.register_palette_entry(
+      evt.target,
+      evt.fg_style,
+      evt.bg_style,
+      foreground_high=evt.fg_style_high,
+      background_high=evt.bg_style_high)
     scr.clear()
 
   def _exit(self):

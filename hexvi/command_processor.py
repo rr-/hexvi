@@ -149,8 +149,10 @@ class CommandProcessor(object):
     self._app_state.set_mode(mode, traversal)
 
   @cmd(names=['hi', 'highlight'])
-  def cmd_highlight(self, target, bg_style, fg_style):
-    zope.event.notify(ColorChangeEvent(target, bg_style, fg_style))
+  def cmd_highlight(
+      self, target, bg_style, fg_style, bg_style_high=None, fg_style_high=None):
+    zope.event.notify(ColorChangeEvent(
+      target, bg_style, fg_style, bg_style_high, fg_style_high))
 
   @cmd(names=['echo'])
   def cmd_echo(self, message):
