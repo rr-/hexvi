@@ -1,3 +1,5 @@
+# default hexvi configuration file
+
 nmap /              ':mode search'
 nmap ?              ':mode rsearch'
 nmap :              ':mode command'

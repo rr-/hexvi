@@ -114,8 +114,11 @@ class CommandProcessor(object):
   @cmd(names=['so', 'source'])
   def cmd_source(self, path):
     for line in open(path, 'r'):
-      command, *args = shlex.split(line)
-      self.exec(command, *args)
+      line = regex.sub('(?<!\\\)#.*$', '', line)
+      result = shlex.split(line)
+      if result:
+        command, *args = result
+        self.exec(command, *args)
 
   @cmd(names=['mode'], use_traversal=True)
   def cmd_mode(self, mode, traversal):
