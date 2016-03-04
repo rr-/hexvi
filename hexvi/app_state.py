@@ -14,6 +14,13 @@ class ModeChangeEvent(object):
     self.traversal = traversal
     self.mode = mode
 
+class SearchState(object):
+  DIR_BACKWARD = 0
+  DIR_FORWARD = 1
+  def __init__(self):
+    self.dir = self.DIR_FORWARD
+    self.text = None
+
 class AppState(object):
   MODE_NORMAL = 'normal'
   MODE_COMMAND = 'command'
@@ -34,6 +41,7 @@ class AppState(object):
     # todo: manage this once we get multiple files support
     self._cur_file = FileState(args.file)
 
+    self.search_state = SearchState()
     self.normal_mode_mappings = MappingCollection()
     self._command_processor.exec(
       'source', os.path.join(os.path.dirname(__file__), 'share', 'hexvirc'))

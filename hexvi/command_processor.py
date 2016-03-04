@@ -11,13 +11,6 @@ class Command(object):
     self.func = func
     self.use_traversal = use_traversal
 
-class SearchState(object):
-  DIR_BACKWARD = 0
-  DIR_FORWARD = 1
-  def __init__(self):
-    self.dir = self.DIR_FORWARD
-    self.text = None
-
 def cmd(names, use_traversal=False):
   def decorator(func):
     return Command(names, func, use_traversal)
@@ -26,7 +19,6 @@ def cmd(names, use_traversal=False):
 class CommandProcessor(object):
   def __init__(self, app_state):
     self._app_state = app_state
-    self._search_state = SearchState()
     self._commands = []
     for x in dir(self):
       if x.startswith('cmd_'):
@@ -116,13 +108,13 @@ class CommandProcessor(object):
   def cmd_search_forward(self, text='', repeat=1):
     repeat=int(repeat)
     for i in range(repeat):
-      self._perform_search(SearchState.DIR_FORWARD, text)
+      self._perform_search(self._app_state.search_state.DIR_FORWARD, text)
 
   @cmd(names=['rsearch'])
   def cmd_search_backward(self, text='', repeat=1):
     repeat=int(repeat)
     for i in range(repeat):
-      self._perform_search(SearchState.DIR_BACKWARD, text)
+      self._perform_search(self._app_state.search_state.DIR_BACKWARD, text)
 
   @cmd(names=['so', 'source'])
   def cmd_source(self, path):
@@ -139,20 +131,20 @@ class CommandProcessor(object):
 
   def _perform_search(self, dir, text):
     if not text:
-      text = self._search_state.text
-      dir = self._search_state.dir ^ dir ^ 1
+      text = self._app_state.search_state.text
+      dir = self._app_state.search_state.dir ^ dir ^ 1
     else:
-      self._search_state.dir = dir
-      self._search_state.text = text
+      self._app_state.search_state.dir = dir
+      self._app_state.search_state.text = text
     if not text:
       raise RuntimeError('No text to search for')
 
-    if dir == SearchState.DIR_BACKWARD:
+    if dir == self._app_state.search_state.DIR_BACKWARD:
       match = regex.search(
         b'(?r)' + text.encode('utf-8'),
         self._app_state.cur_file.file_buffer.get_content(),
         endpos=self._app_state.cur_file.cur_offset)
-    elif dir == SearchState.DIR_FORWARD:
+    elif dir == self._app_state.search_state.DIR_FORWARD:
       match = regex.search(
         text.encode('utf-8'),
         self._app_state.cur_file.file_buffer.get_content(),
