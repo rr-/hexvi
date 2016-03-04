@@ -125,7 +125,7 @@ class CommandProcessor(object):
 
   @cmd(names=['so', 'source'])
   def cmd_source(self, path):
-    for line in open(path, 'r'):
+    for line in open(os.path.expanduser(path), 'r'):
       line = regex.sub('(?<!\\\)#.*$', '', line)
       result = shlex.split(line)
       if result:
