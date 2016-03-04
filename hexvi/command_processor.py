@@ -151,6 +151,10 @@ class CommandProcessor(object):
   def cmd_highlight(self, target, bg_style, fg_style):
     zope.event.notify(ColorChangeEvent(target, bg_style, fg_style))
 
+  @cmd(names=['echo'])
+  def cmd_echo(self, message):
+    zope.event.notify(PrintMessageEvent(message, style='msg-info'))
+
   def _perform_search(self, dir, text):
     if not text:
       text = self._app_state.search_state.text
