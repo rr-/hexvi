@@ -2,6 +2,7 @@ import os
 import regex
 import shlex
 import zope.event
+from urwid import ExitMainLoop
 from .events import ColorChangeEvent
 from .events import PrintMessageEvent
 from .events import ProgramExitEvent
@@ -34,7 +35,9 @@ class CommandProcessor(object):
           else:
             return cmd.func(self, *args)
       raise RuntimeError('Unknown command: ' + cmd_name)
-    except RuntimeError as ex:
+    except ExitMainLoop:
+      raise
+    except Exception as ex:
       zope.event.notify(PrintMessageEvent(str(ex)))
 
   @cmd(names=['q', 'quit'])
