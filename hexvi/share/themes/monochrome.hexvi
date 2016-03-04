@@ -1,3 +1,5 @@
 hi header standout ''
 hi search standout ''
 hi status standout ''
+hi msg-error 'standout' ''
+hi msg-info '' ''

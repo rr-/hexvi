@@ -38,7 +38,7 @@ class CommandProcessor(object):
     except ExitMainLoop:
       raise
     except Exception as ex:
-      zope.event.notify(PrintMessageEvent(str(ex)))
+      zope.event.notify(PrintMessageEvent(str(ex), style='msg-error'))
 
   @cmd(names=['q', 'quit'])
   def cmd_exit(self):

@@ -205,7 +205,7 @@ class MainWindow(urwid.Frame):
       'hexvi' if not value else 'hexvi - ' + value)
 
   def _message_requested(self, evt):
-    self._console.prompt = evt.message
+    self._console.prompt = (evt.style, evt.message)
     self._console.edit_text = ''
 
   def _mode_changed(self, evt):
