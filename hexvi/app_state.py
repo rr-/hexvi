@@ -1,18 +1,11 @@
-from .file_state import FileState, WindowSizeChangeEvent
+from .file_state import FileState
+from .events import WindowSizeChangeEvent
+from .events import ModeChangeEvent
 from .mappings import MappingCollection
 from .command_processor import CommandProcessor
 import zope.event
 import shlex
 import os
-
-class FileBufferChangeEvent(object):
-  def __init__(self, file_buffer):
-    self.file_buffer = file_buffer
-
-class ModeChangeEvent(object):
-  def __init__(self, mode, traversal):
-    self.traversal = traversal
-    self.mode = mode
 
 class SearchState(object):
   DIR_BACKWARD = 0

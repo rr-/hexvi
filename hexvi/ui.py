@@ -1,8 +1,11 @@
 import sys
 import regex
 from .command_processor import ProgramExitEvent
-from .app_state import AppState, WindowSizeChangeEvent, ModeChangeEvent
-from .file_state import PaneChangeEvent, OffsetChangeEvent
+from .app_state import AppState
+from .events import ModeChangeEvent
+from .events import OffsetChangeEvent
+from .events import WindowSizeChangeEvent
+from .file_state import PaneChangeEvent
 from .readline_edit import ReadlineEdit
 
 try:

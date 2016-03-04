@@ -1,18 +1,9 @@
-from .file_buffer import FileBuffer
 import zope.event
 import zope.event.classhandler
-
-class WindowSizeChangeEvent(object):
-  def __init__(self, size):
-    self.size = size
-
-class OffsetChangeEvent(object):
-  def __init__(self, file_state):
-    self.file_state = file_state
-
-class PaneChangeEvent(object):
-  def __init__(self, file_state):
-    self.file_state = file_state
+from .events import OffsetChangeEvent
+from .events import PaneChangeEvent
+from .events import WindowSizeChangeEvent
+from .file_buffer import FileBuffer
 
 class FileState(object):
   PANE_HEX = 'hex'
