@@ -1,10 +1,8 @@
-import zope.event
-import shlex
 import regex
+import shlex
+import zope.event
 from .events import PrintMessageEvent
-
-class ProgramExitEvent(object):
-  pass
+from .events import ProgramExitEvent
 
 class Command(object):
   def __init__(self, names, func, use_traversal):

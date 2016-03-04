@@ -22,3 +22,6 @@ class OffsetChangeEvent(object):
 class PaneChangeEvent(object):
   def __init__(self, file_state):
     self.file_state = file_state
+
+class ProgramExitEvent(object):
+  pass
