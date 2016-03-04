@@ -15,7 +15,7 @@ class SearchState(object):
   DIR_BACKWARD = 0
   DIR_FORWARD = 1
   def __init__(self):
-    self.dir = None
+    self.dir = self.DIR_FORWARD
     self.text = None
 
 def cmd(names, use_traversal=False):
@@ -131,6 +131,8 @@ class CommandProcessor(object):
     else:
       self._search_state.dir = dir
       self._search_state.text = text
+    if not text:
+      raise RuntimeError('No text to search for')
 
     if dir == SearchState.DIR_BACKWARD:
       match = regex.search(
