@@ -104,12 +104,16 @@ class CommandProcessor(object):
     self._app_state.normal_mode_mappings.compile()
 
   @cmd(names=['search'])
-  def cmd_search_forward(self, text=''):
-    self._perform_search(SearchState.DIR_FORWARD, text)
+  def cmd_search_forward(self, text='', repeat=1):
+    repeat=int(repeat)
+    for i in range(repeat):
+      self._perform_search(SearchState.DIR_FORWARD, text)
 
   @cmd(names=['rsearch'])
-  def cmd_search_backward(self, text=''):
-    self._perform_search(SearchState.DIR_BACKWARD, text)
+  def cmd_search_backward(self, text='', repeat=1):
+    repeat=int(repeat)
+    for i in range(repeat):
+      self._perform_search(SearchState.DIR_BACKWARD, text)
 
   @cmd(names=['so', 'source'])
   def cmd_source(self, path):
