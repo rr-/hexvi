@@ -30,8 +30,12 @@ class AppState(object):
     self.settings = settings
     self.cmd_processor = CommandProcessor(self)
 
-    # todo: manage this once we get multiple files support
-    self._cur_file = FileState(self, args.file)
+    try:
+      # todo: manage this once we get multiple files support
+      self._cur_file = FileState(self, args.file)
+    except Exception as ex:
+      self._cur_file = FileState(self)
+      events.notify(events.PrintMessage(str(ex), style='msg-error'))
 
     self.search_state = SearchState()
     self.normal_mode_mappings = MappingCollection()

@@ -144,7 +144,7 @@ class StatusBar(urwid.Widget):
 
     left = '[%s] ' % self._app_state.mode.upper()
     left += trim_left(
-      self._app_state.cur_file.file_buffer.path,
+      self._app_state.cur_file.file_buffer.path or '[No Name]',
       size[0] - (len(right) + len(left) + 3))
 
     left_canvas = urwid.TextCanvas([left.encode('utf-8')])
@@ -176,6 +176,7 @@ class MainWindow(urwid.Frame):
       ]),
       urwid.AttrMap(self._header, 'header'))
 
+  def started(self):
     events.register_handler(events.PrintMessage, self._message_requested)
     events.register_handler(events.ModeChange, self._mode_changed)
 
@@ -223,7 +224,7 @@ class Ui(object):
     events.register_handler(events.ProgramExit, lambda *args: self._exit())
     events.register_handler(events.ColorChange, self._color_changed)
 
-    # todo: subscribe to changes of app_sate.cur_file
+    # todo: subscribe to changes of app_state.cur_file
     self._main_window.caption = self._app_state.cur_file.file_buffer.path
 
     self._loop = urwid.MainLoop(
@@ -232,6 +233,7 @@ class Ui(object):
       self._app_state.settings.term_colors)
 
   def run(self):
+    self._main_window.started()
     self._loop.run()
 
   def _color_changed(self, evt):

@@ -5,8 +5,8 @@ class FileState(object):
   PANE_HEX = 'hex'
   PANE_ASC = 'asc'
 
-  def __init__(self, app_state, file):
-    self.file_buffer = FileBuffer(file)
+  def __init__(self, app_state, file_path=None):
+    self.file_buffer = FileBuffer(file_path)
     self._app_state = app_state
     self._pane = self.PANE_HEX
     self._top_offset = 0
