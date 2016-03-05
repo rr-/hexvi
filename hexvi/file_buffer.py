@@ -1,21 +1,26 @@
+import os
+
 class FileBuffer(object):
   def __init__(self, path):
-    with open(path, 'rb') as fh:
-      self._content = fh.read()
+    self._handle = open(path, 'rb')
     self._path = path
 
-  def get_content(self):
-    return self._content
+  def __destroy__(self):
+    close(self._handle)
 
   def get_content_range(self, offset, size):
-    return self._content[offset:offset+size]
+    self._handle.seek(offset, os.SEEK_SET)
+    return self._handle.read(size)
 
   def get_path(self):
     return self._path
 
   def get_size(self):
-    return len(self._content)
+    old_off = self._handle.tell()
+    self._handle.seek(0, os.SEEK_END)
+    size = self._handle.tell()
+    self._handle.seek(old_off, os.SEEK_SET)
+    return size
 
   size = property(get_size)
   path = property(get_path)
-  content = property(get_content)

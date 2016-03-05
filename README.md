@@ -49,18 +49,16 @@ Note:
 - Color schemes
 - User configuration via `~/.config/hexvirc` and `~/.hexvirc`
 - Simple installation via `setuptools`
+- Support for large files (for now)
 
 ### Planned features
 
 - Multiple buffers (via tabs)
 - Visual mode
 - Yank/paste
-- Editing documents
+- Editing documents (this is going to make large file support tough)
     - Inserting, replacing and deleting text
     - Search and replace
+    - Undo/redo
 - Increase control over appearance
 - Offer more built-in color schemes
-
-### Maybe some day
-
-- Support for large files

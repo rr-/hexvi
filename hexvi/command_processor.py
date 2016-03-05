@@ -167,24 +167,37 @@ class CommandProcessor(object):
       self._app_state.search_state.text = text
     if not text:
       raise RuntimeError('No text to search for')
+    try:
+      cur_file = self._app_state.cur_file
+      max_match_size = 8192 #TODO: configurable
+      if dir == self._app_state.search_state.DIR_BACKWARD:
+        end_pos = cur_file.cur_offset
+        while end_pos > 0:
+          start_pos = max(end_pos - max_match_size * 2, 0)
+          search_buffer = cur_file.file_buffer.get_content_range(
+            start_pos, end_pos - start_pos)
+          match = regex.search(('(?r)' + text).encode('utf-8'), search_buffer)
+          if match:
+            cur_file.cur_offset = start_pos + match.span()[0]
+            return
+          end_pos -= max_match_size
+      elif dir == self._app_state.search_state.DIR_FORWARD:
+        start_pos = cur_file.cur_offset + 1
+        while start_pos < cur_file.size:
+          search_buffer = cur_file.file_buffer.get_content_range(
+            start_pos, max_match_size * 2)
+          match = regex.search(text.encode('utf-8'), search_buffer)
+          if match:
+            cur_file.cur_offset = start_pos + match.span()[0]
+            return
+          start_pos += max_match_size
+      else:
+        assert False, 'Bad search direction'
+    except (KeyboardInterrupt, SystemExit):
+      raise RuntimeError('Aborted')
 
-    if dir == self._app_state.search_state.DIR_BACKWARD:
-      match = regex.search(
-        b'(?r)' + text.encode('utf-8'),
-        self._app_state.cur_file.file_buffer.get_content(),
-        endpos=self._app_state.cur_file.cur_offset)
-    elif dir == self._app_state.search_state.DIR_FORWARD:
-      match = regex.search(
-        text.encode('utf-8'),
-        self._app_state.cur_file.file_buffer.get_content(),
-        pos=self._app_state.cur_file.cur_offset + 1)
-    else:
-      assert False, 'Bad search direction'
-
-    if not match:
-      #todo: if an option is enabled, show info and wrap around
-      raise RuntimeError('Not found')
-    self._app_state.cur_file.cur_offset = match.span()[0]
+    #todo: if an option is enabled, show info and wrap around
+    raise RuntimeError('Not found')
 
   def _exec_via_binding(self, binding, traversal):
     command, *args = shlex.split(binding[1:])
