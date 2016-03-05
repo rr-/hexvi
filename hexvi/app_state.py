@@ -1,11 +1,9 @@
 import os
 import shlex
-import zope.event
-from .file_state import FileState
-from .events import WindowSizeChangeEvent
-from .events import ModeChangeEvent
-from .mappings import MappingCollection
-from .command_processor import CommandProcessor
+import hexvi.events as events
+from hexvi.command_processor import CommandProcessor
+from hexvi.file_state import FileState
+from hexvi.mappings import MappingCollection
 
 class SearchState(object):
   DIR_BACKWARD = 0
@@ -59,7 +57,7 @@ class AppState(object):
   def set_window_size(self, value):
     if value != self._window_size:
       self._window_size = value
-      zope.event.notify(WindowSizeChangeEvent(value))
+      events.notify(events.WindowSizeChange(value))
 
   def get_cur_file(self):
     return self._cur_file
@@ -67,7 +65,7 @@ class AppState(object):
   def set_cur_file(self, value):
     if value != self._cur_file:
       self._cur_file = value
-      zope.event.notify(FileBufferChangeEvent(value))
+      events.notify(FileBufferChange(value))
 
   def get_mode(self):
     return self._mode
@@ -75,7 +73,7 @@ class AppState(object):
   def set_mode(self, value, traversal=None):
     if value != self._mode:
       self._mode = value
-      zope.event.notify(ModeChangeEvent(value, traversal))
+      events.notify(events.ModeChange(value, traversal))
 
   cur_file = property(get_cur_file)
   mode = property(get_mode, set_mode)

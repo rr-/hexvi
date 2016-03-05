@@ -1,23 +1,9 @@
 import sys
 import regex
-from .app_state import AppState
-from .events import ColorChangeEvent
-from .events import ModeChangeEvent
-from .events import OffsetChangeEvent
-from .events import PaneChangeEvent
-from .events import PrintMessageEvent
-from .events import ProgramExitEvent
-from .events import WindowSizeChangeEvent
-from .readline_edit import ReadlineEdit
-
-try:
-  import urwid
-  import zope.event.classhandler
-except ImportError as e:
-  if e.name is None:
-    raise
-  print('Please install %s.' % e.name)
-  sys.exit(1)
+import urwid
+import hexvi.events as events
+from hexvi.app_state import AppState
+from hexvi.readline_edit import ReadlineEdit
 
 def trim_left(text, size):
   ellipsis = '(...)'
@@ -32,10 +18,8 @@ class Dump(urwid.BoxWidget):
   def __init__(self, app_state, file_state):
     self._app_state = app_state
     self._file_state = file_state
-    zope.event.classhandler.handler(
-      PaneChangeEvent, lambda *args: self._invalidate())
-    zope.event.classhandler.handler(
-      OffsetChangeEvent, lambda *args: self._invalidate())
+    events.register_handler(events.PaneChange, lambda *_: self._invalidate())
+    events.register_handler(events.OffsetChange, lambda *_: self._invalidate())
 
   def render(self, size, focus=False):
     self._app_state.window_size = size
@@ -145,10 +129,8 @@ class StatusBar(urwid.Widget):
   def __init__(self, app_state, *args, **kwargs):
     urwid.Widget.__init__(self, *args, **kwargs)
     self._app_state = app_state
-    zope.event.classhandler.handler(
-      OffsetChangeEvent, lambda *_: self._invalidate())
-    zope.event.classhandler.handler(
-      ModeChangeEvent, lambda *_: self._invalidate())
+    events.register_handler(events.OffsetChange, lambda *_: self._invalidate())
+    events.register_handler(events.ModeChange, lambda *_: self._invalidate())
 
   def rows(self, size, focus=False):
     return 1
@@ -194,8 +176,8 @@ class MainWindow(urwid.Frame):
       ]),
       urwid.AttrMap(self._header, 'header'))
 
-    zope.event.classhandler.handler(PrintMessageEvent, self._message_requested)
-    zope.event.classhandler.handler(ModeChangeEvent, self._mode_changed)
+    events.register_handler(events.PrintMessage, self._message_requested)
+    events.register_handler(events.ModeChange, self._mode_changed)
 
   def get_caption(self):
     return regex.sub('^hexvi( - )?', '', self._header.base_widget.get_text()[0])
@@ -238,9 +220,8 @@ class Ui(object):
     self._main_window = MainWindow(self._app_state)
     self._app_state.mode = AppState.MODE_NORMAL
 
-    zope.event.classhandler.handler(
-      ProgramExitEvent, lambda *args: self._exit())
-    zope.event.classhandler.handler(ColorChangeEvent, self._color_changed)
+    events.register_handler(events.ProgramExit, lambda *args: self._exit())
+    events.register_handler(events.ColorChange, self._color_changed)
 
     # todo: subscribe to changes of app_sate.cur_file
     self._main_window.caption = self._app_state.cur_file.file_buffer.path

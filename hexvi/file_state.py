@@ -1,9 +1,5 @@
-import zope.event
-import zope.event.classhandler
-from .events import OffsetChangeEvent
-from .events import PaneChangeEvent
-from .events import WindowSizeChangeEvent
-from .file_buffer import FileBuffer
+import hexvi.events as events
+from hexvi.file_buffer import FileBuffer
 
 class FileState(object):
   PANE_HEX = 'hex'
@@ -16,8 +12,7 @@ class FileState(object):
     self._top_offset = 0
     self._cur_offset = 0
     self._window_size = (0, 0)
-    zope.event.classhandler.handler(
-      WindowSizeChangeEvent, self.window_size_changed)
+    events.register_handler(events.WindowSizeChange, self.window_size_changed)
 
   def window_size_changed(self, event):
     self._window_size = event.size
@@ -32,11 +27,11 @@ class FileState(object):
 
   def set_pane(self, value):
     self._pane = value
-    zope.event.notify(PaneChangeEvent(self))
+    events.notify(events.PaneChange(self))
 
   def set_top_offset(self, value):
     self._top_offset = max(0, min(self.size, value))
-    zope.event.notify(OffsetChangeEvent(self))
+    events.notify(events.OffsetChange(self))
 
   def get_bottom_offset(self):
     return self.top_offset + self._window_size[1] * self.visible_columns
@@ -47,7 +42,7 @@ class FileState(object):
   def set_cur_offset(self, value):
     self._cur_offset = max(0, min(self.size, value))
     self._validate_top_offset()
-    zope.event.notify(OffsetChangeEvent(self))
+    events.notify(events.OffsetChange(self))
 
   def get_top_offset(self):
     return self._top_offset

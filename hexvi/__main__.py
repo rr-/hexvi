@@ -1,9 +1,10 @@
 #!/bin/python3
-import os
 import argparse
-from .app_state import AppState
-from .settings import Settings
-from .ui import Ui
+import os
+import sys
+from hexvi.app_state import AppState
+from hexvi.settings import Settings
+from hexvi.ui import Ui
 
 def parse_args():
   parser = argparse.ArgumentParser(

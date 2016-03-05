@@ -1,30 +1,51 @@
-class PrintMessageEvent(object):
+registry = {}
+
+def notify(event):
+  for event_class in event.__class__.__mro__:
+    for handler in registry.get(event_class, ()):
+      handler(event)
+
+def register_handler(event_class, handler):
+  if not event_class in registry:
+    registry[event_class] = []
+  registry[event_class].append(handler)
+
+def unregister_handler(event_class, handler):
+  try:
+    registry[event_class].remove(handler)
+  except IndexError:
+    pass
+
+class Event(object):
+  pass
+
+class PrintMessage(Event):
   def __init__(self, message, style):
     self.message = message
     self.style = style
 
-class FileBufferChangeEvent(object):
+class FileBufferChange(Event):
   def __init__(self, file_buffer):
     self.file_buffer = file_buffer
 
-class ModeChangeEvent(object):
+class ModeChange(Event):
   def __init__(self, mode, traversal):
     self.traversal = traversal
     self.mode = mode
 
-class WindowSizeChangeEvent(object):
+class WindowSizeChange(Event):
   def __init__(self, size):
     self.size = size
 
-class OffsetChangeEvent(object):
+class OffsetChange(Event):
   def __init__(self, file_state):
     self.file_state = file_state
 
-class PaneChangeEvent(object):
+class PaneChange(Event):
   def __init__(self, file_state):
     self.file_state = file_state
 
-class ColorChangeEvent(object):
+class ColorChange(Event):
   def __init__(self, target, fg_style, bg_style, fg_style_high, bg_style_high):
     self.target = target
     self.bg_style = bg_style
@@ -32,5 +53,5 @@ class ColorChangeEvent(object):
     self.bg_style_high = bg_style_high
     self.fg_style_high = fg_style_high
 
-class ProgramExitEvent(object):
+class ProgramExit(Event):
   pass

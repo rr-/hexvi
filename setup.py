@@ -22,6 +22,6 @@ setup(
         ],
     },
 
-    install_requires = ['urwid', 'zope.event', 'regex'],
+    install_requires = ['urwid', 'regex'],
     keywords         = ['hex editor', 'console', 'urwid', 'desktop'],
 )

@@ -1,11 +1,8 @@
 import os
 import regex
 import shlex
-import zope.event
-from urwid import ExitMainLoop
-from .events import ColorChangeEvent
-from .events import PrintMessageEvent
-from .events import ProgramExitEvent
+import urwid
+import hexvi.events as events
 
 class Command(object):
   def __init__(self, names, func, use_traversal):
@@ -35,14 +32,14 @@ class CommandProcessor(object):
           else:
             return cmd.func(self, *args)
       raise RuntimeError('Unknown command: ' + cmd_name)
-    except ExitMainLoop:
+    except urwid.ExitMainLoop:
       raise
     except Exception as ex:
-      zope.event.notify(PrintMessageEvent(str(ex), style='msg-error'))
+      events.notify(events.PrintMessage(str(ex), style='msg-error'))
 
   @cmd(names=['q', 'quit'])
   def cmd_exit(self):
-    zope.event.notify(ProgramExitEvent())
+    events.notify(events.ProgramExit())
 
   @cmd(names=['toggle_pane', 'toggle_panes'])
   def cmd_toggle_panes(self):
@@ -151,12 +148,12 @@ class CommandProcessor(object):
   @cmd(names=['hi', 'highlight'])
   def cmd_highlight(
       self, target, bg_style, fg_style, bg_style_high=None, fg_style_high=None):
-    zope.event.notify(ColorChangeEvent(
+    events.notify(events.ColorChange(
       target, bg_style, fg_style, bg_style_high, fg_style_high))
 
   @cmd(names=['echo'])
   def cmd_echo(self, message):
-    zope.event.notify(PrintMessageEvent(message, style='msg-info'))
+    events.notify(events.PrintMessage(message, style='msg-info'))
 
   @cmd(names=['set'])
   def cmd_manage_settings(self, key, value=None):
@@ -164,7 +161,7 @@ class CommandProcessor(object):
       raise RuntimeError('Option does not exist: ' + key)
     if not value:
       value = getattr(self._app_state.settings, key)
-      zope.event.notify(PrintMessageEvent(
+      events.notify(events.PrintMessage(
         '%s=%s' % (key, value), style='msg-info'))
     else:
       value_type = type(getattr(self._app_state.settings, key))
