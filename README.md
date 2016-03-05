@@ -8,13 +8,18 @@ Hexvi - a hex editor inspired by Vim.
 
 ### Features
 
+Note:
+
+*dec* denotes any valid decimal number.  
+*hex* denotes any valid hexadecimal number.
+
 - Opening and displaying a file :)
+- Flow
+    - <kbd>Ctrl+W</kbd><kbd>Ctrl+W</kbd>, <kbd>Ctrl+W</kbd><kbd>W</kbd>, <kbd>Tab</kbd>: switch between hex and ASCII dump
+    - <kbd>Ctrl+W</kbd><kbd>Ctrl+H</kbd>, <kbd>Ctrl+W</kbd><kbd>H</kbd>: switch to hex dump
+    - <kbd>Ctrl+W</kbd><kbd>Ctrl+L</kbd>, <kbd>Ctrl+W</kbd><kbd>L</kbd>: switch to ASCII dump
+    - <kbd>Ctrl+Q</kbd>: quit
 - Movement
-
-    *dec* denotes any valid decimal number.  
-    *hex* denotes any valid hexadecimal number.
-
-    - <kbd>Tab</kbd>: switch between hex and ASCII dump
     - <kbd>h</kbd>, <kbd>←</kbd>: move cursor one character to the left
     - <kbd>l</kbd>, <kbd>→</kbd>: move cursor one character to the right
     - <kbd>j</kbd>, <kbd>↓</kbd>: move cursor down one display line
@@ -32,15 +37,30 @@ Hexvi - a hex editor inspired by Vim.
     - <kbd>*hex*</kbd><kbd>G</kbd>: move cursor to the *hex* offset
     - <kbd>^</kbd>: move cursor to the start of display line
     - <kbd>$</kbd>: move cursor to the end of display line
-- Installation via `setuptools`
+- Search
+    - forward search via <kbd>/</kbd>
+    - backward search via <kbd>?</kbd>
+    - PCRE regexes (examples: `a.*b`, `[\xF0-\xFF]`)
+    - <kbd>n</kbd>: jump to next match
+    - <kbd>N</kbd>: jump to previous match
+    - <kbd>*dec*</kbd><kbd>n</kbd>: jump to *dec*-th next match
+    - <kbd>*dec*</kbd><kbd>N</kbd>: jump to *dec*-th previous match
+- Simple commands
+- Color schemes
+- User configuration via `~/.config/hexvirc` and `~/.hexvirc`
+- Simple installation via `setuptools`
 
 ### Planned features
 
-- Colon commands
 - Multiple buffers (via tabs)
-- Search
+- Visual mode
 - Yank/paste
 - Editing documents
-- Search and replace
-- `.hexvirc`
-- Neat appearance
+    - Inserting, replacing and deleting text
+    - Search and replace
+- Increase control over appearance
+- Offer more built-in color schemes
+
+### Maybe some day
+
+- Support for large files
