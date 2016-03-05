@@ -26,13 +26,14 @@ class AppState(object):
     MODE_SEARCH_FORWARD,
     MODE_SEARCH_BACKWARD]
 
-  def __init__(self, args):
+  def __init__(self, settings, args):
     self._window_size = (0, 0)
     self._mode = AppState.MODE_COMMAND
+    self.settings = settings
     self.cmd_processor = CommandProcessor(self)
 
     # todo: manage this once we get multiple files support
-    self._cur_file = FileState(args.file)
+    self._cur_file = FileState(self, args.file)
 
     self.search_state = SearchState()
     self.normal_mode_mappings = MappingCollection()

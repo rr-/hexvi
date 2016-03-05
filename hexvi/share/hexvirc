@@ -37,4 +37,7 @@ nmap N                    ':rsearch'
 nmap {dec}n               ':search "" {arg0}'
 nmap {dec}N               ':rsearch "" {arg0}'
 
+set scrolloff 0           # keep this many lines visible around cursor
+set max_match_size 8192   # max size of text to search for
+
 colorscheme monochrome

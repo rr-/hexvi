@@ -158,6 +158,18 @@ class CommandProcessor(object):
   def cmd_echo(self, message):
     zope.event.notify(PrintMessageEvent(message, style='msg-info'))
 
+  @cmd(names=['set'])
+  def cmd_manage_settings(self, key, value=None):
+    if not hasattr(self._app_state.settings, key):
+      raise RuntimeError('Option does not exist: ' + key)
+    if not value:
+      value = getattr(self._app_state.settings, key)
+      zope.event.notify(PrintMessageEvent(
+        '%s=%s' % (key, value), style='msg-info'))
+    else:
+      value_type = type(getattr(self._app_state.settings, key))
+      setattr(self._app_state.settings, key, value_type(value))
+
   def _perform_search(self, dir, text):
     if not text:
       text = self._app_state.search_state.text
@@ -169,7 +181,7 @@ class CommandProcessor(object):
       raise RuntimeError('No text to search for')
     try:
       cur_file = self._app_state.cur_file
-      max_match_size = 8192 #TODO: configurable
+      max_match_size = self._app_state.settings.max_match_size
       if dir == self._app_state.search_state.DIR_BACKWARD:
         end_pos = cur_file.cur_offset
         while end_pos > 0:

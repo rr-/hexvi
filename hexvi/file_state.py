@@ -9,8 +9,9 @@ class FileState(object):
   PANE_HEX = 'hex'
   PANE_ASC = 'asc'
 
-  def __init__(self, file):
+  def __init__(self, app_state, file):
     self.file_buffer = FileBuffer(file)
+    self._app_state = app_state
     self._pane = self.PANE_HEX
     self._top_offset = 0
     self._cur_offset = 0
@@ -52,8 +53,7 @@ class FileState(object):
     return self._top_offset
 
   def _validate_top_offset(self):
-    # todo: let user override this in the configuration
-    dis = 0
+    dis = self._app_state.settings.scrolloff
     dis = max(0, dis) + 1
     cur_off, vis_col = self.cur_offset, self.visible_columns
     top_off, bot_off = self.top_offset, self.bottom_offset

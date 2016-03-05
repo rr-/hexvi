@@ -1,5 +1,7 @@
-hi header standout ''
-hi search standout ''
-hi status standout ''
-hi msg-error 'standout' ''
-hi msg-info '' ''
+set term_colors 16
+
+hi header     standout default
+hi search     standout default
+hi status     standout default
+hi msg-error  standout default
+hi msg-info   default default
