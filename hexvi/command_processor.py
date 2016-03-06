@@ -108,17 +108,79 @@ class CommandProcessor(object):
       lambda traversal: self._exec_via_binding(binding, traversal))
     self._app_state.normal_mode_mappings.compile()
 
+  @cmd(names=['jump_to_next_word'])
+  def cmd_jump_to_next_word(self, repeat=1):
+    for i in range(int(repeat)):
+      pattern = self._choose_word_class(
+        self._app_state.cur_file.file_buffer.get_content_range(
+          self._app_state.cur_file.cur_offset, 1))
+      self._scan(
+        self._app_state.search_state.DIR_FORWARD,
+        self._app_state.cur_file.cur_offset,
+        1000,
+        1000,
+        lambda *args: self._forward_word_callback(pattern, *args))
+
+  @cmd(names=['jump_to_prev_word'])
+  def cmd_jump_to_prev_word(self, repeat=1):
+    for i in range(int(repeat)):
+      if self._app_state.cur_file.cur_offset == 0:
+        return
+      patterns = ['[a-zA-Z]', '[0-9]', '[^a-zA-Z0-9]']
+      pattern = self._choose_word_class(
+        self._app_state.cur_file.file_buffer.get_content_range(
+          self._app_state.cur_file.cur_offset - 1, 1))
+      self._scan(
+        self._app_state.search_state.DIR_BACKWARD,
+        self._app_state.cur_file.cur_offset,
+        1000,
+        1000,
+        lambda *args: self._backward_word_callback(pattern, *args))
+
+  def _forward_word_callback(self, pattern, buffer, start_pos, end_pos, dir):
+    indices = range(len(buffer))
+    if dir == self._app_state.search_state.DIR_BACKWARD:
+      indices = reversed(indices)
+    for i in indices:
+      char_under_cursor = b'%c' % buffer[i]
+      if not regex.match(pattern.encode('utf-8'), char_under_cursor):
+        self._app_state.cur_file.cur_offset = start_pos + i
+        return True
+      if end_pos == self._app_state.cur_file.size:
+        self._app_state.cur_file.cur_offset = self._app_state.cur_file.size
+    return False
+
+  def _backward_word_callback(self, pattern, buffer, start_pos, end_pos, dir):
+    indices = reversed(range(len(buffer)))
+    for i in indices:
+      if i - 1 >= 0:
+        char_under_cursor = b'%c' % buffer[i-1]
+        if not regex.match(pattern.encode('utf-8'), char_under_cursor):
+          self._app_state.cur_file.cur_offset = start_pos + i
+          return True
+      if start_pos == 0:
+        self._app_state.cur_file.cur_offset = 0
+    return False
+
+  def _choose_word_class(self, char):
+    patterns = ['[a-zA-Z]', '[0-9]', '[^a-zA-Z0-9]']
+    chosen_pattern = None
+    for pattern in patterns:
+      if regex.match(pattern.encode('utf-8'), char):
+        return pattern
+    assert False
+
   @cmd(names=['search'])
   def cmd_search_forward(self, text='', repeat=1):
     repeat=int(repeat)
     for i in range(repeat):
-      self._perform_search(self._app_state.search_state.DIR_FORWARD, text)
+      self._perform_user_search(self._app_state.search_state.DIR_FORWARD, text)
 
   @cmd(names=['rsearch'])
   def cmd_search_backward(self, text='', repeat=1):
     repeat=int(repeat)
     for i in range(repeat):
-      self._perform_search(self._app_state.search_state.DIR_BACKWARD, text)
+      self._perform_user_search(self._app_state.search_state.DIR_BACKWARD, text)
 
   @cmd(names=['so', 'source'])
   def cmd_source(self, path):
@@ -167,46 +229,65 @@ class CommandProcessor(object):
       value_type = type(getattr(self._app_state.settings, key))
       setattr(self._app_state.settings, key, value_type(value))
 
-  def _perform_search(self, dir, text):
+  def _perform_user_search(self, dir, text):
     if not text:
       text = self._app_state.search_state.text
       dir = self._app_state.search_state.dir ^ dir ^ 1
     else:
       self._app_state.search_state.dir = dir
       self._app_state.search_state.text = text
-    if not text:
+    return self._perform_stateless_search(dir, text)
+
+  def _perform_stateless_search(self, dir, pattern):
+    if not pattern:
       raise RuntimeError('No text to search for')
+    max_match_size = self._app_state.settings.max_match_size
+    if dir == self._app_state.search_state.DIR_BACKWARD:
+      start_pos = self._app_state.cur_file.cur_offset
+      pattern = '(?r)' + pattern
+    else:
+      start_pos = self._app_state.cur_file.cur_offset + 1
+    if not self._scan(
+        dir,
+        start_pos,
+        max_match_size,
+        max_match_size * 2,
+        lambda *args: self._search_callback(pattern, *args)):
+      #todo: if an option is enabled, show info and wrap around
+      raise RuntimeError('Not found')
+
+  def _search_callback(self, pattern, buffer, start_pos, end_pos, dir):
+    match = regex.search(pattern.encode('utf-8'), buffer)
+    if match:
+      self._app_state.cur_file.cur_offset = start_pos + match.span()[0]
+      return True
+    return False
+
+  def _scan(self, dir, start_pos, buffer_size, jump_size, functor):
     try:
       cur_file = self._app_state.cur_file
-      max_match_size = self._app_state.settings.max_match_size
       if dir == self._app_state.search_state.DIR_BACKWARD:
-        end_pos = cur_file.cur_offset
+        end_pos = start_pos
         while end_pos > 0:
-          start_pos = max(end_pos - max_match_size * 2, 0)
-          search_buffer = cur_file.file_buffer.get_content_range(
+          start_pos = max(end_pos - buffer_size, 0)
+          buffer = cur_file.file_buffer.get_content_range(
             start_pos, end_pos - start_pos)
-          match = regex.search(('(?r)' + text).encode('utf-8'), search_buffer)
-          if match:
-            cur_file.cur_offset = start_pos + match.span()[0]
-            return
-          end_pos -= max_match_size
+          if functor(buffer, start_pos, end_pos, dir):
+            return True
+          end_pos -= jump_size
       elif dir == self._app_state.search_state.DIR_FORWARD:
-        start_pos = cur_file.cur_offset + 1
         while start_pos < cur_file.size:
-          search_buffer = cur_file.file_buffer.get_content_range(
-            start_pos, max_match_size * 2)
-          match = regex.search(text.encode('utf-8'), search_buffer)
-          if match:
-            cur_file.cur_offset = start_pos + match.span()[0]
-            return
-          start_pos += max_match_size
+          buffer = cur_file.file_buffer.get_content_range(
+            start_pos, buffer_size)
+          end_pos = start_pos + len(buffer)
+          if functor(buffer, start_pos, end_pos, dir):
+            return True
+          start_pos += jump_size
       else:
         assert False, 'Bad search direction'
     except (KeyboardInterrupt, SystemExit):
       raise RuntimeError('Aborted')
-
-    #todo: if an option is enabled, show info and wrap around
-    raise RuntimeError('Not found')
+    return False
 
   def _exec_via_binding(self, binding, traversal):
     command, *args = shlex.split(binding[1:])
