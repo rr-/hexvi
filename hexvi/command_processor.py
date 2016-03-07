@@ -142,7 +142,7 @@ class CommandProcessor(object):
     if dir == self._app_state.search_state.DIR_BACKWARD:
       indices = reversed(indices)
     for i in indices:
-      char_under_cursor = b'%c' % buffer[i]
+      char_under_cursor = buffer[i:i+1]
       if not regex.match(pattern.encode('utf-8'), char_under_cursor):
         self._app_state.cur_file.cur_offset = start_pos + i
         return True
@@ -154,7 +154,7 @@ class CommandProcessor(object):
     indices = reversed(range(len(buffer)))
     for i in indices:
       if i - 1 >= 0:
-        char_under_cursor = b'%c' % buffer[i-1]
+        char_under_cursor = buffer[i-1:i]
         if not regex.match(pattern.encode('utf-8'), char_under_cursor):
           self._app_state.cur_file.cur_offset = start_pos + i
           return True
