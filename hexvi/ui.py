@@ -34,8 +34,9 @@ class Dump(urwid.BoxWidget):
     top_off = self._file_state.top_offset
     vis_col = self._file_state.visible_columns
 
-    buffer = self._file_state.file_buffer.get_content_range(
-      top_off, vis_col * height)
+    vis_bytes = min(vis_col * height + top_off, self._file_state.size) - top_off
+
+    buffer = self._file_state.file_buffer.get(top_off, vis_bytes)
     off_lines = []
     hex_lines = []
     asc_lines = []
@@ -60,7 +61,10 @@ class Dump(urwid.BoxWidget):
       search_buffer_off = max(top_off - half_page, 0)
       search_buffer_shift = top_off - search_buffer_off
       search_buffer_size = search_buffer_shift + vis_col * height + half_page
-      search_buffer = self._file_state.file_buffer.get_content_range(
+      search_buffer_size = min(
+        search_buffer_size + search_buffer_off,
+        self._file_state.size) - search_buffer_off
+      search_buffer = self._file_state.file_buffer.get(
         search_buffer_off, search_buffer_size)
       pattern = self._app_state.search_state.text.encode('utf8')
       for m in regex.finditer(pattern, search_buffer):
@@ -262,7 +266,7 @@ class Ui(object):
     events.register_handler(events.ProgramExit, lambda *args: self._exit())
     events.register_handler(events.ColorChange, self._color_changed)
 
-    # todo: subscribe to changes of app_state.cur_file
+    # TODO: subscribe to changes of app_state.cur_file
     self._main_window.caption = self._app_state.cur_file.file_buffer.path
 
     self._loop = urwid.MainLoop(

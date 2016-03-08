@@ -19,7 +19,7 @@ class FileState(object):
     self._validate_top_offset()
 
   def get_visible_columns(self):
-    # todo: let user override this in the configuration
+    # TODO: let user override this in the configuration
     return (self._window_size[0] - 8 - 1) // 4
 
   def get_pane(self):

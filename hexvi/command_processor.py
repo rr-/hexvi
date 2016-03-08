@@ -124,7 +124,7 @@ class CommandProcessor(object):
   def cmd_jump_to_next_word(self, repeat=1):
     for i in range(int(repeat)):
       pattern = self._choose_word_class(
-        self._app_state.cur_file.file_buffer.get_content_range(
+        self._app_state.cur_file.file_buffer.get(
           self._app_state.cur_file.cur_offset, 1))
       self._scan(
         self._app_state.search_state.DIR_FORWARD,
@@ -140,7 +140,7 @@ class CommandProcessor(object):
         return
       patterns = ['[a-zA-Z]', '[0-9]', '[^a-zA-Z0-9]']
       pattern = self._choose_word_class(
-        self._app_state.cur_file.file_buffer.get_content_range(
+        self._app_state.cur_file.file_buffer.get(
           self._app_state.cur_file.cur_offset - 1, 1))
       self._scan(
         self._app_state.search_state.DIR_BACKWARD,
@@ -265,7 +265,7 @@ class CommandProcessor(object):
         max_match_size,
         max_match_size * 2,
         lambda *args: self._search_callback(pattern, *args)):
-      #todo: if an option is enabled, show info and wrap around
+      # TODO: if an option is enabled, show info and wrap around
       raise RuntimeError('Not found')
 
   def _search_callback(self, pattern, buffer, start_pos, end_pos, dir):
@@ -282,15 +282,13 @@ class CommandProcessor(object):
         end_pos = start_pos
         while end_pos > 0:
           start_pos = max(end_pos - buffer_size, 0)
-          buffer = cur_file.file_buffer.get_content_range(
-            start_pos, end_pos - start_pos)
+          buffer = cur_file.file_buffer.get(start_pos, end_pos - start_pos)
           if functor(buffer, start_pos, end_pos, dir):
             return True
           end_pos -= jump_size
       elif dir == self._app_state.search_state.DIR_FORWARD:
         while start_pos < cur_file.size:
-          buffer = cur_file.file_buffer.get_content_range(
-            start_pos, buffer_size)
+          buffer = cur_file.file_buffer.get(start_pos, buffer_size)
           end_pos = start_pos + len(buffer)
           if functor(buffer, start_pos, end_pos, dir):
             return True

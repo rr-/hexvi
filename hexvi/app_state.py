@@ -33,7 +33,7 @@ class AppState(object):
     self.cmd_processor = CommandProcessor(self)
 
     try:
-      # todo: manage this once we get multiple files support
+      # TODO: manage this once we get multiple files support
       self._cur_file = FileState(self, args.file)
     except Exception as ex:
       self._cur_file = FileState(self)
@@ -59,6 +59,8 @@ class AppState(object):
 
   def accept_byte_input(self, byte):
     assert self.mode == self.MODE_REPLACE
+    self.cur_file.file_buffer.replace(self.cur_file.cur_offset, bytes([byte]))
+    self.cur_file.cur_offset += 1
 
   def get_window_size(self):
     return self._window_size
