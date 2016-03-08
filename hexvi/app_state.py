@@ -17,12 +17,14 @@ class AppState(object):
   MODE_COMMAND = 'command'
   MODE_SEARCH_FORWARD = 'search'
   MODE_SEARCH_BACKWARD = 'rsearch'
+  MODE_REPLACE = 'replace'
 
   ALL_MODES = [
     MODE_NORMAL,
     MODE_COMMAND,
     MODE_SEARCH_FORWARD,
-    MODE_SEARCH_BACKWARD]
+    MODE_SEARCH_BACKWARD,
+    MODE_REPLACE]
 
   def __init__(self, settings, args):
     self._window_size = (0, 0)
@@ -54,6 +56,9 @@ class AppState(object):
       self.cmd_processor.exec('rsearch', text)
     else:
       raise NotImplementedError(text)
+
+  def accept_byte_input(self, byte):
+    assert self.mode == self.MODE_REPLACE
 
   def get_window_size(self):
     return self._window_size

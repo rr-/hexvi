@@ -11,13 +11,18 @@ def trim_left(text, size):
     return text
   return ellipsis + text[len(ellipsis)+len(text)-size:]
 
+def is_hex(c):
+  return c in [ord(c) for c in list('0123456789abcdefABCDEF')]
+
 def is_ascii(c):
   return c >= 32 and c < 127
 
 class Dump(urwid.BoxWidget):
   def __init__(self, app_state, file_state):
+    self.editing = False
     self._app_state = app_state
     self._file_state = file_state
+    self._user_byte_input = ''
     events.register_handler(events.PaneChange, lambda *_: self._invalidate())
     events.register_handler(events.OffsetChange, lambda *_: self._invalidate())
 
@@ -72,6 +77,14 @@ class Dump(urwid.BoxWidget):
     if self._file_state.pane == self._file_state.PANE_HEX:
       cursor_pos = (cursor_pos[0] * 3, cursor_pos[1])
 
+    if self._user_byte_input:
+      assert self._file_state.pane == self._file_state.PANE_HEX
+      cursor_pos = (cursor_pos[0] + len(self._user_byte_input), cursor_pos[1])
+      x, y = cursor_pos
+      hex_lines[y] = hex_lines[y][:x-1] \
+        + self._user_byte_input.encode('utf-8') \
+        + hex_lines[y][x:]
+
     canvas_def = []
     Dump.pos = 0
     def append(widget, width, is_focused):
@@ -91,6 +104,30 @@ class Dump(urwid.BoxWidget):
     return multi_canvas
 
   def keypress(self, pos, key):
+    if self.editing:
+      # if we're dealing with nontrivial keypress such as ctrl+something or tab
+      if len(key) != 1:
+        if self._user_byte_input:
+          # cancel editing on escape
+          if key == 'esc':
+            self._user_byte_input = ''
+            self._invalidate()
+            return key
+          # otherwise disallow running any bindings
+          return None
+        else:
+          return key
+
+      if self._file_state.pane == self._file_state.PANE_HEX:
+        if is_hex(ord(key)):
+          self._user_byte_input += key
+          self._invalidate()
+          if len(self._user_byte_input) == 2:
+            self._app_state.accept_byte_input(int(self._user_byte_input, 16))
+            self._user_byte_input = ''
+      else:
+        self._app_state.accept_byte_input(ord(key))
+      return None
     return key
 
   def _format_offset_row(self, offset):
@@ -193,7 +230,8 @@ class MainWindow(urwid.Frame):
 
   def _mode_changed(self, evt):
     self._console.edit_text = ''
-    if evt.mode == AppState.MODE_NORMAL:
+    if evt.mode in [AppState.MODE_NORMAL, AppState.MODE_REPLACE]:
+      self._dump.editing = evt.mode in [AppState.MODE_REPLACE]
       self._console.prompt = ''
       self.focus.set_focus(0)
     else:

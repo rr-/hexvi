@@ -99,6 +99,10 @@ class CommandProcessor(object):
   def cmd_map_for_normal_mode(self, key_sequence_str, binding):
     self._map(key_sequence_str, binding, self._app_state.MODE_NORMAL)
 
+  @cmd(names=['rmap'])
+  def cmd_map_for_replace_mode(self, key_sequence_str, binding):
+    self._map(key_sequence_str, binding, self._app_state.MODE_REPLACE)
+
   @cmd(names=['cmap'])
   def cmd_map_for_command_mode(self, key_sequence_str, binding):
     self._map(key_sequence_str, binding, self._app_state.MODE_COMMAND)

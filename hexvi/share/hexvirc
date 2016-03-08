@@ -3,6 +3,7 @@
 nmap /                    ':mode search'
 nmap ?                    ':mode rsearch'
 nmap :                    ':mode command'
+nmap R                    ':mode replace'
 nmap h                    ':jump_by_bytes -1'
 nmap j                    ':jump_by_lines 1'
 nmap k                    ':jump_by_lines -1'
@@ -42,6 +43,21 @@ nmap {dec}n               ':search "" {arg0}'
 nmap {dec}N               ':rsearch "" {arg0}'
 
 cmap <esc>                ':mode normal'
+
+rmap <backspace>          ':jump_by_bytes -1'
+rmap <left>               ':jump_by_bytes -1'
+rmap <down>               ':jump_by_lines 1'
+rmap <up>                 ':jump_by_lines -1'
+rmap <right>              ':jump_by_bytes 1'
+rmap <esc>                ':mode normal'
+rmap <tab>                ':toggle_pane'
+rmap '<ctrl w><ctrl w>'   ':toggle_pane'
+rmap '<ctrl w>w'          ':toggle_pane'
+rmap '<ctrl w><ctrl h>'   ':set_pane hex'
+rmap '<ctrl w>h'          ':set_pane hex'
+rmap '<ctrl w><ctrl l>'   ':set_pane ascii'
+rmap '<ctrl w>l'          ':set_pane ascii'
+rmap '<ctrl q>'           ':quit'
 
 set scrolloff 0           # keep this many lines visible around cursor
 set max_match_size 8192   # max size of text to search for
