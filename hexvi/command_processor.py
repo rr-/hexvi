@@ -97,16 +97,24 @@ class CommandProcessor(object):
 
   @cmd(names=['nmap'])
   def cmd_map_for_normal_mode(self, key_sequence_str, binding):
+    self._map(key_sequence_str, binding, self._app_state.MODE_NORMAL)
+
+  @cmd(names=['cmap'])
+  def cmd_map_for_command_mode(self, key_sequence_str, binding):
+    self._map(key_sequence_str, binding, self._app_state.MODE_COMMAND)
+    self._map(key_sequence_str, binding, self._app_state.MODE_SEARCH_FORWARD)
+    self._map(key_sequence_str, binding, self._app_state.MODE_SEARCH_BACKWARD)
+
+  def _map(self, key_sequence_str, binding, mode):
     key_sequence = regex.findall('({[^}]*}|<[^>]*>|[^<>{}])', key_sequence_str)
     key_sequence = [regex.sub('[{}<>]', '', x) for x in key_sequence]
     if not binding:
       raise RuntimeError('Empty binding')
     if binding[0] != ':':
       raise RuntimeError('Only command-based bindings are supported')
-    self._app_state.normal_mode_mappings.add(
+    self._app_state.mappings[mode].add(
       key_sequence,
       lambda traversal: self._exec_via_binding(binding, traversal))
-    self._app_state.normal_mode_mappings.compile()
 
   @cmd(names=['jump_to_next_word'])
   def cmd_jump_to_next_word(self, repeat=1):

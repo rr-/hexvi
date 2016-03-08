@@ -86,6 +86,7 @@ class MappingCollection(object):
 
     self._arg_proxies = {b.name: b for b in arg_proxies}
     self._nfa = NFA()
+    self.compile()
 
   def add(self, path, func):
     state = self._nfa.init_state
@@ -102,6 +103,7 @@ class MappingCollection(object):
           next_state.func = func
         self._nfa.connect(state, next_state, symbol)
       state = next_state
+    self.compile()
 
   def compile(self):
     self._traverser = NFATraverser(self._nfa)

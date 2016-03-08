@@ -38,7 +38,7 @@ class AppState(object):
       events.notify(events.PrintMessage(str(ex), style='msg-error'))
 
     self.search_state = SearchState()
-    self.normal_mode_mappings = MappingCollection()
+    self.mappings = {key: MappingCollection() for key in self.ALL_MODES}
     self.hexvi_dir = os.path.dirname(__file__)
     self.resources_dir = os.path.join(self.hexvi_dir, 'share')
 

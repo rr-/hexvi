@@ -110,7 +110,7 @@ class Console(ReadlineEdit):
     self._app_state = app_state
 
   def keypress(self, pos, key):
-    if (key == 'backspace' and not self.edit_text) or key == 'esc':
+    if (key == 'backspace' and not self.edit_text):
       self._app_state.mode = AppState.MODE_NORMAL
       return None
     if key == 'enter':
@@ -250,4 +250,4 @@ class Ui(object):
     raise urwid.ExitMainLoop()
 
   def _key_pressed(self, key):
-    self._app_state.normal_mode_mappings.keypress(key)
+    self._app_state.mappings[self._app_state.mode].keypress(key)
