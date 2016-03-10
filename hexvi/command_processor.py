@@ -288,7 +288,8 @@ class CommandProcessor(object):
           end_pos -= jump_size
       elif dir == self._app_state.search_state.DIR_FORWARD:
         while start_pos < cur_file.size:
-          buffer = cur_file.file_buffer.get(start_pos, buffer_size)
+          buffer = cur_file.file_buffer.get(
+            start_pos, min(buffer_size, cur_file.size - start_pos))
           end_pos = start_pos + len(buffer)
           if functor(buffer, start_pos, end_pos, dir):
             return True
