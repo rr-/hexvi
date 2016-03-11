@@ -81,6 +81,22 @@ class CommandProcessor(object):
         * self._app_state.cur_file.visible_rows
         * self._app_state.cur_file.visible_columns)
 
+  @cmd(names=['jump_to_screen_top'])
+  def cmd_jump_to_screen_top(self):
+    self._app_state.cur_file.cur_offset = self._app_state.cur_file.top_offset
+
+  @cmd(names=['jump_to_screen_bottom'])
+  def cmd_jump_to_screen_bottom(self):
+    self._app_state.cur_file.cur_offset = (
+      self._app_state.cur_file.bottom_offset
+        - self._app_state.cur_file.visible_columns)
+
+  @cmd(names=['jump_to_screen_middle'])
+  def cmd_jump_to_screen_middle(self):
+    bot_off = self._app_state.cur_file.bottom_offset
+    top_off = self._app_state.cur_file.top_offset
+    self._app_state.cur_file.cur_offset = top_off + (bot_off - top_off) // 2
+
   @cmd(names=['jump_to_start_of_line'])
   def cmd_jump_to_start_of_line(self):
     self._app_state.cur_file.cur_offset -= (
