@@ -44,6 +44,8 @@ Note:
     - <kbd>$</kbd>: move cursor to the end of display line
     - <kbd>w</kbd>: move cursor to the next word
     - <kbd>b</kbd>: move cursor to the previous word
+    - <kbd>PgUp</kbd>, <kbd>Shift+up</kbd>, <kbd>Ctrl+B</kbd>: previous page
+    - <kbd>PgDown</kbd>, <kbd>Shift+down</kbd>, <kbd>Ctrl+F</kbd>: next page
 - Text replacing (<kbd>r</kbd>)
 - Text removal
     - <kbd>x</kbd>: remove character to the right
@@ -67,8 +69,7 @@ Note:
 - Insert / append mode
 - Undo/redo
 - More movement commands (<kbd>t</kbd>, <kbd>f</kbd>, <kbd>T</kbd>,
-  <kbd>F</kbd>, <kbd>PgDn</kbd>, <kbd>PgUp</kbd>, <kbd>H</kbd>, <kbd>M</kbd>,
-  <kbd>L</kbd>)
+  <kbd>F</kbd>, <kbd>H</kbd>, <kbd>M</kbd>, <kbd>L</kbd>)
 - Easier jumps to offsets (`:deadbeef`, possibly
   <kbd>g</kbd><kbd>*hex*</kbd><kbd>CR</kbd>)
 - Improved normal mode key retractions

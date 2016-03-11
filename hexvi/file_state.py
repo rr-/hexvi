@@ -18,6 +18,9 @@ class FileState(object):
     self._window_size = event.size
     self._validate_top_offset()
 
+  def get_visible_rows(self):
+    return self._window_size[1]
+
   def get_visible_columns(self):
     # TODO: let user override this in the configuration
     return (self._window_size[0] - 8 - 1) // 4
@@ -62,5 +65,6 @@ class FileState(object):
   top_offset = property(get_top_offset, set_top_offset)
   pane = property(get_pane, set_pane)
   bottom_offset = property(get_bottom_offset)
+  visible_rows = property(get_visible_rows)
   visible_columns = property(get_visible_columns)
   size = property(lambda self: self.file_buffer.size)

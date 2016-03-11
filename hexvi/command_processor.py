@@ -73,6 +73,14 @@ class CommandProcessor(object):
     self._app_state.cur_file.cur_offset += (
       offset * self._app_state.cur_file.visible_columns)
 
+  @cmd(names=['jump_by_pages'])
+  def cmd_jump_by_pages(self, pages='1'):
+    pages = int(pages)
+    self._app_state.cur_file.cur_offset += (
+      pages
+        * self._app_state.cur_file.visible_rows
+        * self._app_state.cur_file.visible_columns)
+
   @cmd(names=['jump_to_start_of_line'])
   def cmd_jump_to_start_of_line(self):
     self._app_state.cur_file.cur_offset -= (
