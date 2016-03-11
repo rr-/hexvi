@@ -14,6 +14,11 @@ Note:
 *hex* denotes any valid hexadecimal number.
 
 - Opening and displaying a file :)
+- Support for large files
+- Simple commands
+- Color schemes
+- Simple installation via `setuptools`
+- Limited user configuration via `~/.config/hexvirc` and `~/.hexvirc`
 - Flow
     - <kbd>Ctrl+W</kbd><kbd>Ctrl+W</kbd>, <kbd>Ctrl+W</kbd><kbd>W</kbd>, <kbd>Tab</kbd>: switch between hex and ASCII dump
     - <kbd>Ctrl+W</kbd><kbd>Ctrl+H</kbd>, <kbd>Ctrl+W</kbd><kbd>H</kbd>: switch to hex dump
@@ -35,8 +40,17 @@ Note:
     - <kbd>g</kbd><kbd>g</kbd>: move cursor to the beginning of the file
     - <kbd>G</kbd>: move cursor to the end of file
     - <kbd>*hex*</kbd><kbd>G</kbd>: move cursor to the *hex* offset
-    - <kbd>^</kbd>: move cursor to the start of display line
+    - <kbd>^</kbd>, <kbd>0</kbd>: move cursor to the start of display line
     - <kbd>$</kbd>: move cursor to the end of display line
+    - <kbd>w</kbd>: move cursor to the next word
+    - <kbd>b</kbd>: move cursor to the previous word
+- Text replacing (<kbd>r</kbd>)
+- Text removal
+    - <kbd>x</kbd>: remove character to the right
+    - <kbd>*dec*</kbd><kbd>x</kbd>: remove *dec* characters to the right
+    - <kbd>X</kbd>: remove character to the left
+    - <kbd>*dec*</kbd><kbd>X</kbd>: remove *dec* characters to the left
+    - <kbd>d</kbd> + all of the movement commands
 - Search
     - forward search via <kbd>/</kbd>
     - backward search via <kbd>?</kbd>
@@ -45,20 +59,31 @@ Note:
     - <kbd>N</kbd>: jump to previous match
     - <kbd>*dec*</kbd><kbd>n</kbd>: jump to *dec*-th next match
     - <kbd>*dec*</kbd><kbd>N</kbd>: jump to *dec*-th previous match
-- Simple commands
-- Color schemes
-- User configuration via `~/.config/hexvirc` and `~/.hexvirc`
-- Simple installation via `setuptools`
-- Support for large files (for now)
 
 ### Planned features
 
+- File saving
 - Multiple buffers (via tabs)
+- Insert / append mode
+- Undo/redo
+- More movement commands (<kbd>t</kbd>, <kbd>f</kbd>, <kbd>T</kbd>,
+  <kbd>F</kbd>, <kbd>PgDn</kbd>, <kbd>PgUp</kbd>, <kbd>H</kbd>, <kbd>M</kbd>,
+  <kbd>L</kbd>)
+- Easier jumps to offsets (`:deadbeef`, possibly
+  <kbd>g</kbd><kbd>*hex*</kbd><kbd>CR</kbd>)
+- Improved normal mode key retractions
+- Command history (<kbd>↑</kbd>, <kbd>Ctrl+P</kbd>)
 - Visual mode
 - Yank/paste
-- Editing documents (this is going to make large file support tough)
-    - Inserting, replacing and deleting text
-    - Search and replace
-    - Undo/redo
-- Increase control over appearance
-- Offer more built-in color schemes
+- Search and replace
+- Man page
+- Enhanced control over appearance
+- More built-in color schemes
+
+### Features not likely to be added
+
+- Support for marks
+- <kbd>Tab</kbd> in command mode to auto complete input command
+- <kbd>d/...</kbd>, <kbd>d?...</kbd> to delete up until searched text
+- <kbd>Ctrl+R</kbd> in command mode to search command history
+- <kbd>Ctrl+O</kbd> in normal mode to jump to last edit place, stack-based
