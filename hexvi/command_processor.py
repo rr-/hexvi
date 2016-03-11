@@ -182,6 +182,20 @@ class CommandProcessor(object):
         return pattern
     assert False
 
+  @cmd(names=['delete'])
+  def cmd_delete(self, movement_command, *args):
+    old_offset = self._app_state.cur_file.cur_offset
+    self.exec(movement_command, *args)
+    new_offset = self._app_state.cur_file.cur_offset
+    if old_offset < new_offset:
+      offset = old_offset
+      size = new_offset - old_offset
+    else:
+      offset = new_offset
+      size = old_offset - new_offset
+    self._app_state.cur_file.file_buffer.delete(offset, size)
+    self._app_state.cur_file.cur_offset = offset
+
   @cmd(names=['search'])
   def cmd_search_forward(self, text='', repeat=1):
     repeat=int(repeat)
