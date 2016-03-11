@@ -81,6 +81,15 @@ class CommandProcessor(object):
         * self._app_state.cur_file.visible_rows
         * self._app_state.cur_file.visible_columns)
 
+  @cmd(names=['jump_to_percentage'])
+  def cmd_jump_to_percentage(self, percentage):
+    percentage = float(percentage)
+    cur_file = self._app_state.cur_file
+    cur_offset = int(cur_file.size * percentage / 100.0)
+    #while cur_offset % cur_file.visible_columns != 0:
+    #  cur_offset -= 1
+    cur_file.cur_offset = cur_offset
+
   @cmd(names=['jump_to_screen_top'])
   def cmd_jump_to_screen_top(self):
     self._app_state.cur_file.cur_offset = self._app_state.cur_file.top_offset
