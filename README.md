@@ -49,7 +49,7 @@ Note:
     - <kbd>H</kbd>: jump to screen top
     - <kbd>M</kbd>: jump to screen middle
     - <kbd>L</kbd>: jump to screen bottom
-- Test inserting (<kbd>i</kbd>)
+- Test inserting (<kbd>i</kbd>, <kbd>a</kbd>)
 - Text replacing (<kbd>r</kbd>)
 - Text removal
     - <kbd>x</kbd>: remove character to the right
@@ -70,7 +70,6 @@ Note:
 
 - File saving
 - Multiple buffers (via tabs)
-- Append mode
 - Undo/redo
 - More movement commands (<kbd>t</kbd>, <kbd>f</kbd>, <kbd>T</kbd>,
   <kbd>F</kbd>)

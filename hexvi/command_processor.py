@@ -23,6 +23,11 @@ class CommandProcessor(object):
       if x.startswith('cmd_'):
         self._commands.append(getattr(self, x))
 
+  def exec_raw(self, text, traversal=None):
+    for chunk in regex.split(r'(?<!\\)\|', text):
+      command, *args = shlex.split(chunk)
+      self.exec(command, *args, traversal=traversal)
+
   def exec(self, cmd_name, *args, traversal=None):
     try:
       for cmd in self._commands:
@@ -352,9 +357,8 @@ class CommandProcessor(object):
     return False
 
   def _exec_via_binding(self, binding, traversal):
-    command, *args = shlex.split(binding[1:])
-    for i in range(len(args)):
-      args[i] = regex.sub(
-        '\{arg\[(\d)\]\}',
-        lambda m: traversal.args[int(m.groups()[0])], args[i])
-    return self.exec(command, *args, traversal=traversal)
+    text = binding[1:]
+    for i in range(len(traversal.args)):
+      text = regex.sub('\{arg\[%d\]\}' % i, traversal.args[i], text)
+    text = regex.sub('\{arg\[(\d)\]\}', '', text)
+    return self.exec_raw(text, traversal=traversal)

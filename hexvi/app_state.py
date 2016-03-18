@@ -50,8 +50,7 @@ class AppState(object):
     mode = self.mode
     self.mode = AppState.MODE_NORMAL
     if mode == self.MODE_COMMAND:
-      command, *args = shlex.split(text)
-      self.cmd_processor.exec(command, *args)
+      self.cmd_processor.exec_raw(text)
     elif mode == self.MODE_SEARCH_FORWARD:
       self.cmd_processor.exec('search', text)
     elif mode == self.MODE_SEARCH_BACKWARD:
