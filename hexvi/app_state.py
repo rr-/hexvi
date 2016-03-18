@@ -1,5 +1,4 @@
 import os
-import shlex
 import hexvi.events as events
 from hexvi.command_processor import CommandProcessor
 from hexvi.file_state import FileState
@@ -20,13 +19,17 @@ class AppState(object):
   MODE_REPLACE = 'replace'
   MODE_INSERT = 'insert'
 
-  ALL_MODES = [
-    MODE_NORMAL,
+  COMMAND_MODES = [
     MODE_COMMAND,
     MODE_SEARCH_FORWARD,
-    MODE_SEARCH_BACKWARD,
+    MODE_SEARCH_BACKWARD]
+
+  NON_COMMAND_MODES = [
+    MODE_NORMAL,
     MODE_REPLACE,
     MODE_INSERT]
+
+  ALL_MODES = COMMAND_MODES + NON_COMMAND_MODES
 
   def __init__(self, settings, args):
     self._window_size = (0, 0)

@@ -23,8 +23,8 @@ class CommandProcessor(object):
       if x.startswith('cmd_'):
         self._commands.append(getattr(self, x))
 
-  def exec_raw(self, text, traversal=None):
-    for chunk in regex.split(r'(?<!\\)\|', text):
+  def exec_raw(self, command_text, traversal=None):
+    for chunk in regex.split(r'(?<!\\)\|', command_text):
       command, *args = shlex.split(chunk)
       self.exec(command, *args, traversal=traversal)
 
@@ -134,33 +134,30 @@ class CommandProcessor(object):
     self._app_state.cur_file.cur_offset = self._app_state.cur_file.size
 
   @cmd(names=['nmap'])
-  def cmd_map_for_normal_mode(self, key_sequence_str, binding):
-    self._map(key_sequence_str, binding, self._app_state.MODE_NORMAL)
+  def cmd_map_for_normal_mode(self, key_sequence_text, command_text):
+    self._map(key_sequence_text, command_text, self._app_state.MODE_NORMAL)
 
   @cmd(names=['imap'])
-  def cmd_map_for_insert_mode(self, key_sequence_str, binding):
-    self._map(key_sequence_str, binding, self._app_state.MODE_INSERT)
+  def cmd_map_for_insert_mode(self, key_sequence_text, command_text):
+    self._map(key_sequence_text, command_text, self._app_state.MODE_INSERT)
 
   @cmd(names=['rmap'])
-  def cmd_map_for_replace_mode(self, key_sequence_str, binding):
-    self._map(key_sequence_str, binding, self._app_state.MODE_REPLACE)
+  def cmd_map_for_replace_mode(self, key_sequence_text, command_text):
+    self._map(key_sequence_text, command_text, self._app_state.MODE_REPLACE)
 
   @cmd(names=['cmap'])
-  def cmd_map_for_command_mode(self, key_sequence_str, binding):
-    self._map(key_sequence_str, binding, self._app_state.MODE_COMMAND)
-    self._map(key_sequence_str, binding, self._app_state.MODE_SEARCH_FORWARD)
-    self._map(key_sequence_str, binding, self._app_state.MODE_SEARCH_BACKWARD)
+  def cmd_map_for_command_mode(self, key_sequence_text, command_text):
+    for mode in self._app_state.COMMAND_MODES:
+      self._map(key_sequence_text, command_text, mode)
 
-  def _map(self, key_sequence_str, binding, mode):
+  def _map(self, key_sequence_str, command_text, mode):
     key_sequence = regex.findall('({[^}]*}|<[^>]*>|[^<>{}])', key_sequence_str)
     key_sequence = [regex.sub('[{}<>]', '', x) for x in key_sequence]
-    if not binding:
+    if not command_text:
       raise RuntimeError('Empty binding')
-    if binding[0] != ':':
-      raise RuntimeError('Only command-based bindings are supported')
     self._app_state.mappings[mode].add(
       key_sequence,
-      lambda traversal: self._exec_via_binding(binding, traversal))
+      lambda traversal: self._exec_via_binding(command_text, traversal))
 
   @cmd(names=['jump_to_next_word'])
   def cmd_jump_to_next_word(self, repeat=1):
@@ -356,9 +353,9 @@ class CommandProcessor(object):
       raise RuntimeError('Aborted')
     return False
 
-  def _exec_via_binding(self, binding, traversal):
-    text = binding[1:]
+  def _exec_via_binding(self, command_text, traversal):
     for i in range(len(traversal.args)):
-      text = regex.sub('\{arg\[%d\]\}' % i, traversal.args[i], text)
-    text = regex.sub('\{arg\[(\d)\]\}', '', text)
-    return self.exec_raw(text, traversal=traversal)
+      command_text = regex.sub(
+        '\{arg\[%d\]\}' % i, traversal.args[i], command_text)
+    command_text = regex.sub('\{arg\[(\d)\]\}', '', command_text)
+    return self.exec_raw(command_text, traversal=traversal)
