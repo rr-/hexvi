@@ -136,14 +136,14 @@ class Dump(urwid.BoxWidget):
 
   def _format_offset_row(self, offset):
     if offset - 1 < self._file_state.size:
-      return '%08x' % offset
+      return '%08X' % offset
     return ''
 
   def _format_asc_row(self, buffer):
     return ''.join('%c' % c if is_ascii(c) else '.' for c in buffer)
 
   def _format_hex_row(self, buffer):
-    return ''.join('%02x ' % c for c in buffer)
+    return ''.join('%02X ' % c for c in buffer)
 
 class Console(ReadlineEdit):
   def __init__(self, app_state, *args, **kwargs):
