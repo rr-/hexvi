@@ -31,8 +31,9 @@ class Dump(urwid.BoxWidget):
     return max(4, math.ceil(math.log(max(1, self._file_state.size), 16)))
 
   def render(self, size, focus=False):
+    off_digits = self.get_offset_digits()
     self._app_state.window_size = size
-    self._file_state.offset_digits = self.get_offset_digits()
+    self._file_state.offset_digits = off_digits
     width, height = size
 
     cur_off = self._file_state.cur_offset
@@ -56,12 +57,11 @@ class Dump(urwid.BoxWidget):
     hex_lines = [(l + ' ').encode('utf-8') for l in hex_lines]
     asc_lines = [(l + ' ').encode('utf-8') for l in asc_lines]
 
-    hex_hilight = [[] for l in asc_lines]
-    asc_hilight = [[] for l in asc_lines]
+    off_hilight = [[] for l in off_lines]
+    hex_hilight = [[('hex', 3) for i in range(vis_col)] for l in hex_lines]
+    asc_hilight = [[('asc', 1) for i in range(vis_col)] for l in asc_lines]
 
     if self._app_state.search_state.text:
-      hex_hilight = [[(None, 3) for i in range(vis_col)] for l in hex_lines]
-      asc_hilight = [[(None, 1) for i in range(vis_col)] for l in asc_lines]
       half_page = vis_col * height // 2
       search_buffer_off = max(top_off - half_page, 0)
       search_buffer_shift = top_off - search_buffer_off
@@ -78,8 +78,15 @@ class Dump(urwid.BoxWidget):
           y = rel_cur_off // vis_col
           x = rel_cur_off % vis_col
           if y >= 0  and y < height:
-            asc_hilight[y][x] = ('search', 1)
-            hex_hilight[y][x] = ('search', 3)
+            asc_hilight[y][x] = ('hex-search', 1)
+            hex_hilight[y][x] = ('asc-search', 3)
+
+    for y in range(len(off_lines)):
+      off_hilight[y] = [('off', 1) for i in range(len(off_lines[y]))]
+      for x in range(len(off_lines[y])):
+        if off_lines[y][x:x+1] != b'0':
+          break
+        off_hilight[y][x] = ('off0', 1)
 
     rel_cur_off = cur_off - top_off
     cursor_pos = (rel_cur_off % vis_col, rel_cur_off // vis_col)
@@ -99,7 +106,7 @@ class Dump(urwid.BoxWidget):
     def append(widget, width, is_focused):
       canvas_def.append((widget, Dump.pos, False, width))
       Dump.pos += width
-    append(urwid.TextCanvas(off_lines), self.get_offset_digits() + 1, False)
+    append(urwid.TextCanvas(off_lines, off_hilight), off_digits + 1, False)
     append(urwid.TextCanvas(hex_lines, hex_hilight), vis_col * 3, True)
     append(urwid.TextCanvas(asc_lines, asc_hilight), vis_col, False)
 

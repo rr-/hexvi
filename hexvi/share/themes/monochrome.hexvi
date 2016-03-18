@@ -1,7 +1,12 @@
 set term_colors 16
 
 hi header     standout default
-hi search     standout default
+hi asc        default default
+hi hex        default default
+hi asc-search standout default
+hi hex-search standout default
 hi status     standout default
+hi off        default default
+hi off0       default default
 hi msg-error  standout default
 hi msg-info   default default
