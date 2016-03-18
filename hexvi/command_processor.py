@@ -5,14 +5,13 @@ import urwid
 import hexvi.events as events
 
 class Command(object):
-  def __init__(self, names, func, use_traversal):
+  def __init__(self, names, func):
     self.names = names
     self.func = func
-    self.use_traversal = use_traversal
 
-def cmd(names, use_traversal=False):
+def cmd(names):
   def decorator(func):
-    return Command(names, func, use_traversal)
+    return Command(names, func)
   return decorator
 
 class CommandProcessor(object):
@@ -32,10 +31,7 @@ class CommandProcessor(object):
     try:
       for cmd in self._commands:
         if cmd_name in cmd.names:
-          if cmd.use_traversal:
-            return cmd.func(self, *args, traversal=traversal)
-          else:
-            return cmd.func(self, *args)
+          return cmd.func(self, *args)
       raise RuntimeError('Unknown command: ' + cmd_name)
     except urwid.ExitMainLoop:
       raise
@@ -268,9 +264,9 @@ class CommandProcessor(object):
         return self.cmd_source.func(self, full_path)
     raise RuntimeError(path + ' not found (looked in %r)' % search_paths)
 
-  @cmd(names=['mode'], use_traversal=True)
-  def cmd_mode(self, mode, traversal):
-    self._app_state.set_mode(mode, traversal)
+  @cmd(names=['mode'])
+  def cmd_mode(self, mode):
+    self._app_state.set_mode(mode)
 
   @cmd(names=['hi', 'highlight'])
   def cmd_highlight(

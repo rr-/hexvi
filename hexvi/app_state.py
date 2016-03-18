@@ -19,16 +19,12 @@ class AppState(object):
   MODE_REPLACE = 'replace'
   MODE_INSERT = 'insert'
 
+  INPUT_MODES = [MODE_REPLACE, MODE_INSERT]
   COMMAND_MODES = [
     MODE_COMMAND,
     MODE_SEARCH_FORWARD,
     MODE_SEARCH_BACKWARD]
-
-  NON_COMMAND_MODES = [
-    MODE_NORMAL,
-    MODE_REPLACE,
-    MODE_INSERT]
-
+  NON_COMMAND_MODES = [MODE_NORMAL] + INPUT_MODES
   ALL_MODES = COMMAND_MODES + NON_COMMAND_MODES
 
   def __init__(self, settings, args):
@@ -90,10 +86,10 @@ class AppState(object):
   def get_mode(self):
     return self._mode
 
-  def set_mode(self, value, traversal=None):
+  def set_mode(self, value):
     if value != self._mode:
       self._mode = value
-      events.notify(events.ModeChange(value, traversal))
+      events.notify(events.ModeChange(value))
 
   cur_file = property(get_cur_file)
   mode = property(get_mode, set_mode)

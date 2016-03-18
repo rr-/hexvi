@@ -29,8 +29,7 @@ class FileBufferChange(Event):
     self.file_buffer = file_buffer
 
 class ModeChange(Event):
-  def __init__(self, mode, traversal):
-    self.traversal = traversal
+  def __init__(self, mode):
     self.mode = mode
 
 class WindowSizeChange(Event):

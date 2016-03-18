@@ -246,13 +246,12 @@ class MainWindow(urwid.Frame):
 
   def _mode_changed(self, evt):
     self._console.edit_text = ''
-    if evt.mode in [AppState.MODE_NORMAL, AppState.MODE_REPLACE, AppState.MODE_INSERT]:
-      self._dump.editing = evt.mode in [AppState.MODE_REPLACE, AppState.MODE_INSERT]
+    if evt.mode in AppState.NON_COMMAND_MODES:
+      self._dump.editing = evt.mode in AppState.INPUT_MODES
       self._console.prompt = ''
       self.focus.set_focus(0)
     else:
-      self._console.prompt = \
-        ''.join(evt.traversal.path) if evt.traversal else '>'
+      self._console.prompt = self._app_state.settings.mode_chars[evt.mode]
       self.focus.set_focus(2)
 
   def _make_header(self):
