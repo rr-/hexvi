@@ -355,5 +355,6 @@ class CommandProcessor(object):
     command, *args = shlex.split(binding[1:])
     for i in range(len(args)):
       args[i] = regex.sub(
-        '\{arg(\d)\}', lambda m: traversal.args[int(m.groups()[0])], args[i])
+        '\{arg\[(\d)\]\}',
+        lambda m: traversal.args[int(m.groups()[0])], args[i])
     return self.exec(command, *args, traversal=traversal)
