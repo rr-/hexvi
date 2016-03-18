@@ -34,7 +34,7 @@ class Dump(urwid.BoxWidget):
         self._app_state.window_size = size
         self._file_state.offset_digits = off_digits
 
-        cur_off = self._file_state.cur_offset
+        cur_off = self._file_state.current_offset
         top_off = self._file_state.top_offset
         vis_col = self._file_state.visible_columns
         vis_row = self._file_state.visible_rows
@@ -191,14 +191,14 @@ class StatusBar(urwid.Widget):
 
     def render(self, size, focus=False):
         right = '0x%X / 0x%X (%d%%)' % (
-            self._app_state.cur_file.cur_offset,
-            self._app_state.cur_file.size,
-            self._app_state.cur_file.cur_offset * (
-                100.0 / max(1, self._app_state.cur_file.size)))
+            self._app_state.current_file.current_offset,
+            self._app_state.current_file.size,
+            self._app_state.current_file.current_offset * (
+                100.0 / max(1, self._app_state.current_file.size)))
 
         left = '[%s] ' % self._app_state.mode.upper()
         left += trim_left(
-            self._app_state.cur_file.file_buffer.path or '[No Name]',
+            self._app_state.current_file.file_buffer.path or '[No Name]',
             size[0] - (len(right) + len(left) + 3))
 
         left_canvas = urwid.TextCanvas([left.encode('utf-8')])
@@ -217,7 +217,7 @@ class MainWindow(urwid.Frame):
         self._app_state = app_state
 
         self._header = urwid.Text(u'hexvi')
-        self._dump = Dump(self._app_state, self._app_state.cur_file)
+        self._dump = Dump(self._app_state, self._app_state.current_file)
         self._status_bar = StatusBar(self._app_state)
         self._console = Console(self._app_state)
 
@@ -266,8 +266,8 @@ class Ui(object):
         events.register_handler(events.ProgramExit, lambda *args: self._exit())
         events.register_handler(events.ColorChange, self._color_changed)
 
-        # TODO: subscribe to changes of app_state.cur_file
-        self._main_window.caption = self._app_state.cur_file.file_buffer.path
+        # TODO: subscribe to changes of app_state.current_file
+        self._main_window.caption = self._app_state.current_file.file_buffer.path
 
         self._loop = urwid.MainLoop(
             self._main_window, unhandled_input=self._key_pressed)

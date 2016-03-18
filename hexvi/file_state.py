@@ -54,10 +54,10 @@ class FileState(object):
     def get_bottom_offset(self):
         return self.top_offset + self._window_size[1] * self.visible_columns
 
-    def get_cur_offset(self):
+    def get_current_offset(self):
         return self._cur_offset
 
-    def set_cur_offset(self, value):
+    def set_current_offset(self, value):
         self._cur_offset = max(0, min(self.size, value))
         self._validate_top_offset()
         events.notify(events.OffsetChange(self))
@@ -68,7 +68,7 @@ class FileState(object):
     def _validate_top_offset(self):
         dis = self._app_state.settings.scrolloff
         dis = max(0, dis) + 1
-        cur_off, vis_col = self.cur_offset, self.visible_columns
+        cur_off, vis_col = self.current_offset, self.visible_columns
         top_off, bot_off = self.top_offset, self.bottom_offset
         if top_off + (dis - 1) * vis_col > cur_off:
             top_off -= vis_col * ((top_off - cur_off - 1) // vis_col + dis)
@@ -76,7 +76,7 @@ class FileState(object):
             top_off += vis_col * ((cur_off - bot_off) // vis_col + dis)
         self.top_offset = top_off
 
-    cur_offset = property(get_cur_offset, set_cur_offset)
+    current_offset = property(get_current_offset, set_current_offset)
     top_offset = property(get_top_offset, set_top_offset)
     bottom_offset = property(get_bottom_offset)
     size = property(lambda self: self.file_buffer.size)

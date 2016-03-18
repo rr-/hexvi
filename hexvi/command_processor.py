@@ -49,90 +49,92 @@ class CommandProcessor(object):
 
     @cmd(names=['toggle_pane', 'toggle_panes'])
     def cmd_toggle_panes(self):
-        if self._app_state.cur_file.pane == self._app_state.cur_file.PANE_HEX:
-            self._app_state.cur_file.pane = self._app_state.cur_file.PANE_ASC
+        cur_file = self._app_state.current_file
+        if cur_file.pane == cur_file.PANE_HEX:
+            cur_file.pane = cur_file.PANE_ASC
         else:
-            self._app_state.cur_file.pane = self._app_state.cur_file.PANE_HEX
+            cur_file.pane = cur_file.PANE_HEX
 
     @cmd(names=['set_pane'])
     def cmd_set_pane(self, pane):
+        cur_file = self._app_state.current_file
         if pane == 'hex':
-            self._app_state.cur_file.pane = self._app_state.cur_file.PANE_HEX
+            cur_file.pane = cur_file.PANE_HEX
         elif pane in ['ascii', 'asc']:
-            self._app_state.cur_file.pane = self._app_state.cur_file.PANE_ASC
+            cur_file.pane = cur_file.PANE_ASC
         else:
             raise RuntimeError('Bad pane (try with "hex" or "ascii")')
 
     @cmd(names=['jump_to'])
     def cmd_jump_to(self, offset):
         offset = int(offset, 16)
-        self._app_state.cur_file.cur_offset = offset
+        self._app_state.current_file.current_offset = offset
 
     @cmd(names=['jump_by_bytes'])
     def cmd_jump_by_bytes(self, offset='1'):
         offset = int(offset)
-        self._app_state.cur_file.cur_offset += offset
+        self._app_state.current_file.current_offset += offset
 
     @cmd(names=['jump_by_lines'])
     def cmd_jump_by_lines(self, offset='1'):
         offset = int(offset)
-        self._app_state.cur_file.cur_offset += (
-            offset * self._app_state.cur_file.visible_columns)
+        self._app_state.current_file.current_offset += (
+            offset * self._app_state.current_file.visible_columns)
 
     @cmd(names=['jump_by_pages'])
     def cmd_jump_by_pages(self, pages='1'):
         pages = int(pages)
-        self._app_state.cur_file.cur_offset += \
+        self._app_state.current_file.current_offset += \
             pages \
-                * self._app_state.cur_file.visible_rows \
-                * self._app_state.cur_file.visible_columns
+                * self._app_state.current_file.visible_rows \
+                * self._app_state.current_file.visible_columns
 
     @cmd(names=['jump_to_percentage'])
     def cmd_jump_to_percentage(self, percentage):
         percentage = float(percentage)
-        cur_file = self._app_state.cur_file
-        cur_offset = int(cur_file.size * percentage / 100.0)
+        cur_file = self._app_state.current_file
+        cur_offset = int(current_file.size * percentage / 100.0)
         #while cur_offset % cur_file.visible_columns != 0:
         #    cur_offset -= 1
-        cur_file.cur_offset = cur_offset
+        cur_file.current_offset = cur_offset
 
     @cmd(names=['jump_to_screen_top'])
     def cmd_jump_to_screen_top(self):
-        self._app_state.cur_file.cur_offset = self._app_state.cur_file.top_offset
+        self._app_state.current_file.current_offset = self._app_state.current_file.top_offset
 
     @cmd(names=['jump_to_screen_bottom'])
     def cmd_jump_to_screen_bottom(self):
-        self._app_state.cur_file.cur_offset = \
-            self._app_state.cur_file.bottom_offset \
-                - self._app_state.cur_file.visible_columns
+        self._app_state.current_file.current_offset = \
+            self._app_state.current_file.bottom_offset \
+                - self._app_state.current_file.visible_columns
 
     @cmd(names=['jump_to_screen_middle'])
     def cmd_jump_to_screen_middle(self):
-        bot_off = self._app_state.cur_file.bottom_offset
-        top_off = self._app_state.cur_file.top_offset
-        self._app_state.cur_file.cur_offset = top_off + (bot_off - top_off) // 2
+        bot_off = self._app_state.current_file.bottom_offset
+        top_off = self._app_state.current_file.top_offset
+        self._app_state.current_file.current_offset = top_off + (bot_off - top_off) // 2
 
     @cmd(names=['jump_to_start_of_line'])
     def cmd_jump_to_start_of_line(self):
-        self._app_state.cur_file.cur_offset -= (
-            self._app_state.cur_file.cur_offset %
-            self._app_state.cur_file.visible_columns)
+        self._app_state.current_file.current_offset -= (
+            self._app_state.current_file.current_offset %
+            self._app_state.current_file.visible_columns)
 
     @cmd(names=['jump_to_end_of_line'])
     def cmd_jump_to_end_of_line(self):
-        self._app_state.cur_file.cur_offset += \
-            self._app_state.cur_file.visible_columns \
+        self._app_state.current_file.current_offset += \
+            self._app_state.current_file.visible_columns \
                 - 1 \
-                - self._app_state.cur_file.cur_offset \
-                    % self._app_state.cur_file.visible_columns
+                - self._app_state.current_file.current_offset \
+                    % self._app_state.current_file.visible_columns
 
     @cmd(names=['jump_to_start_of_file'])
     def cmd_jump_to_start_of_file(self):
-        self._app_state.cur_file.cur_offset = 0
+        self._app_state.current_file.current_offset = 0
 
     @cmd(names=['jump_to_end_of_file'])
     def cmd_jump_to_end_of_file(self):
-        self._app_state.cur_file.cur_offset = self._app_state.cur_file.size
+        self._app_state.current_file.current_offset = self._app_state.current_file.size
 
     @cmd(names=['nmap'])
     def cmd_map_for_normal_mode(self, key_sequence_text, command_text):
@@ -164,11 +166,11 @@ class CommandProcessor(object):
     def cmd_jump_to_next_word(self, repeat=1):
         for _ in range(int(repeat)):
             pattern = self._choose_word_class(
-                self._app_state.cur_file.file_buffer.get(
-                    self._app_state.cur_file.cur_offset, 1))
+                self._app_state.current_file.file_buffer.get(
+                    self._app_state.current_file.current_offset, 1))
             self._scan(
                 self._app_state.search_state.DIR_FORWARD,
-                self._app_state.cur_file.cur_offset,
+                self._app_state.current_file.current_offset,
                 1000,
                 1000,
                 lambda buffer, start_pos, end_pos, direction: \
@@ -178,14 +180,14 @@ class CommandProcessor(object):
     @cmd(names=['jump_to_prev_word'])
     def cmd_jump_to_prev_word(self, repeat=1):
         for _ in range(int(repeat)):
-            if self._app_state.cur_file.cur_offset == 0:
+            if self._app_state.current_file.current_offset == 0:
                 return
             pattern = self._choose_word_class(
-                self._app_state.cur_file.file_buffer.get(
-                    self._app_state.cur_file.cur_offset - 1, 1))
+                self._app_state.current_file.file_buffer.get(
+                    self._app_state.current_file.current_offset - 1, 1))
             self._scan(
                 self._app_state.search_state.DIR_BACKWARD,
-                self._app_state.cur_file.cur_offset,
+                self._app_state.current_file.current_offset,
                 1000,
                 1000,
                 lambda buffer, start_pos, end_pos, direction: \
@@ -198,10 +200,10 @@ class CommandProcessor(object):
         for i in indices:
             char_under_cursor = buffer[i:i+1]
             if not regex.match(pattern.encode('utf-8'), char_under_cursor):
-                self._app_state.cur_file.cur_offset = start_pos + i
+                self._app_state.current_file.current_offset = start_pos + i
                 return True
-            if end_pos == self._app_state.cur_file.size:
-                self._app_state.cur_file.cur_offset = self._app_state.cur_file.size
+            if end_pos == self._app_state.current_file.size:
+                self._app_state.current_file.current_offset = self._app_state.current_file.size
         return False
 
     def _backward_word_callback(self, pattern, buffer, start_pos):
@@ -210,10 +212,10 @@ class CommandProcessor(object):
             if i - 1 >= 0:
                 char_under_cursor = buffer[i-1:i]
                 if not regex.match(pattern.encode('utf-8'), char_under_cursor):
-                    self._app_state.cur_file.cur_offset = start_pos + i
+                    self._app_state.current_file.current_offset = start_pos + i
                     return True
             if start_pos == 0:
-                self._app_state.cur_file.cur_offset = 0
+                self._app_state.current_file.current_offset = 0
         return False
 
     def _choose_word_class(self, char):
@@ -225,17 +227,17 @@ class CommandProcessor(object):
 
     @cmd(names=['delete'])
     def cmd_delete(self, movement_command, *args):
-        old_offset = self._app_state.cur_file.cur_offset
+        old_offset = self._app_state.current_file.current_offset
         self.exec(movement_command, *args)
-        new_offset = self._app_state.cur_file.cur_offset
+        new_offset = self._app_state.current_file.current_offset
         if old_offset < new_offset:
             offset = old_offset
             size = new_offset - old_offset
         else:
             offset = new_offset
             size = old_offset - new_offset
-        self._app_state.cur_file.file_buffer.delete(offset, size)
-        self._app_state.cur_file.cur_offset = offset
+        self._app_state.current_file.file_buffer.delete(offset, size)
+        self._app_state.current_file.current_offset = offset
 
     @cmd(names=['search'])
     def cmd_search_forward(self, text='', repeat=1):
@@ -310,10 +312,10 @@ class CommandProcessor(object):
             raise RuntimeError('No text to search for')
         max_match_size = self._app_state.settings.max_match_size
         if direction == self._app_state.search_state.DIR_BACKWARD:
-            start_pos = self._app_state.cur_file.cur_offset
+            start_pos = self._app_state.current_file.current_offset
             pattern = '(?r)' + pattern
         else:
-            start_pos = self._app_state.cur_file.cur_offset + 1
+            start_pos = self._app_state.current_file.current_offset + 1
         if not self._scan(
                 direction,
                 start_pos,
@@ -327,13 +329,13 @@ class CommandProcessor(object):
     def _search_callback(self, pattern, buffer, start_pos):
         match = regex.search(pattern.encode('utf-8'), buffer)
         if match:
-            self._app_state.cur_file.cur_offset = start_pos + match.span()[0]
+            self._app_state.current_file.current_offset = start_pos + match.span()[0]
             return True
         return False
 
     def _scan(self, direction, start_pos, buffer_size, jump_size, functor):
         try:
-            cur_file = self._app_state.cur_file
+            cur_file = self._app_state.current_file
             if direction == self._app_state.search_state.DIR_BACKWARD:
                 end_pos = start_pos
                 while end_pos > 0:

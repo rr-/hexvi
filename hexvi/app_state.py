@@ -68,11 +68,13 @@ class AppState(object):
     def accept_byte_input(self, byte):
         ''' Fired when the user enters a byte in either HEX or ASCII dump. '''
         if self.mode == self.MODE_REPLACE:
-            self.cur_file.file_buffer.replace(self.cur_file.cur_offset, bytes([byte]))
-            self.cur_file.cur_offset += 1
+            self.current_file.file_buffer.replace(
+                self.current_file.current_offset, bytes([byte]))
+            self.current_file.current_offset += 1
         elif self.mode == self.MODE_INSERT:
-            self.cur_file.file_buffer.insert(self.cur_file.cur_offset, bytes([byte]))
-            self.cur_file.cur_offset += 1
+            self.current_file.file_buffer.insert(
+                self.current_file.current_offset, bytes([byte]))
+            self.current_file.current_offset += 1
         else:
             raise NotImplementedError()
 
@@ -86,11 +88,11 @@ class AppState(object):
             self._window_size = value
             events.notify(events.WindowSizeChange(value))
 
-    def get_cur_file(self):
+    def get_current_file(self):
         ''' Returns the currently focused file state. '''
         return self._cur_file
 
-    def set_cur_file(self, value):
+    def set_current_file(self, value):
         ''' Sets the currently focused file state. '''
         if value != self._cur_file:
             self._cur_file = value
@@ -106,6 +108,6 @@ class AppState(object):
             self._mode = value
             events.notify(events.ModeChange(value))
 
-    cur_file = property(get_cur_file)
+    current_file = property(get_current_file)
     mode = property(get_mode, set_mode)
     window_size = property(get_window_size, set_window_size)
