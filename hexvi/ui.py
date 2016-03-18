@@ -1,5 +1,6 @@
-import sys
+import math
 import regex
+import sys
 import urwid
 import hexvi.events as events
 from hexvi.app_state import AppState
@@ -26,8 +27,12 @@ class Dump(urwid.BoxWidget):
     events.register_handler(events.PaneChange, lambda *_: self._invalidate())
     events.register_handler(events.OffsetChange, lambda *_: self._invalidate())
 
+  def get_offset_digits(self):
+    return max(4, math.ceil(math.log(max(1, self._file_state.size), 16)))
+
   def render(self, size, focus=False):
     self._app_state.window_size = size
+    self._file_state.offset_digits = self.get_offset_digits()
     width, height = size
 
     cur_off = self._file_state.cur_offset
@@ -94,7 +99,7 @@ class Dump(urwid.BoxWidget):
     def append(widget, width, is_focused):
       canvas_def.append((widget, Dump.pos, False, width))
       Dump.pos += width
-    append(urwid.TextCanvas(off_lines), 9, False)
+    append(urwid.TextCanvas(off_lines), self.get_offset_digits() + 1, False)
     append(urwid.TextCanvas(hex_lines, hex_hilight), vis_col * 3, True)
     append(urwid.TextCanvas(asc_lines, asc_hilight), vis_col, False)
 
@@ -136,7 +141,7 @@ class Dump(urwid.BoxWidget):
 
   def _format_offset_row(self, offset):
     if offset - 1 < self._file_state.size:
-      return '%08X' % offset
+      return '%0*X' % (self.get_offset_digits(), offset)
     return ''
 
   def _format_asc_row(self, buffer):
