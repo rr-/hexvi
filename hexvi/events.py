@@ -1,56 +1,44 @@
-registry = {}
+'''
+Definitions of events, and simple event handling / dispatching.
+'''
+
+from collections import namedtuple
+
+_registry = {}
 
 def notify(event):
-  for event_class in event.__class__.__mro__:
-    for handler in registry.get(event_class, ()):
-      handler(event)
+    ''' Dispatches an event to all registered handlers. '''
+    for event_class in event.__class__.__mro__:
+        for handler in _registry.get(event_class, ()):
+            handler(event)
 
 def register_handler(event_class, handler):
-  if not event_class in registry:
-    registry[event_class] = []
-  registry[event_class].append(handler)
+    ''' Registers a handler that reacts to a given event. '''
+    if not event_class in _registry:
+        _registry[event_class] = []
+    _registry[event_class].append(handler)
 
 def unregister_handler(event_class, handler):
-  try:
-    registry[event_class].remove(handler)
-  except IndexError:
-    pass
+    ''' Stops dispatching given event to a given handler. '''
+    try:
+        _registry[event_class].remove(handler)
+    except IndexError:
+        pass
 
-class Event(object):
-  pass
+PrintMessage = namedtuple('PrintMessage', ['message', 'style'])
 
-class PrintMessage(Event):
-  def __init__(self, message, style):
-    self.message = message
-    self.style = style
+ModeChange = namedtuple('ModeChange', ['mode'])
 
-class FileBufferChange(Event):
-  def __init__(self, file_buffer):
-    self.file_buffer = file_buffer
+FileBufferChange = namedtuple('FileBufferChange', ['file_buffer'])
 
-class ModeChange(Event):
-  def __init__(self, mode):
-    self.mode = mode
+WindowSizeChange = namedtuple('WindowSizeChange', ['size'])
 
-class WindowSizeChange(Event):
-  def __init__(self, size):
-    self.size = size
+OffsetChange = namedtuple('OffsetChange', ['file_state'])
 
-class OffsetChange(Event):
-  def __init__(self, file_state):
-    self.file_state = file_state
+PaneChange = namedtuple('PaneChange', ['file_state'])
 
-class PaneChange(Event):
-  def __init__(self, file_state):
-    self.file_state = file_state
+ColorChange = namedtuple(
+    'ColorChange',
+    ['target', 'fg_style', 'bg_style', 'fg_style_high', 'bg_style_high'])
 
-class ColorChange(Event):
-  def __init__(self, target, fg_style, bg_style, fg_style_high, bg_style_high):
-    self.target = target
-    self.bg_style = bg_style
-    self.fg_style = fg_style
-    self.bg_style_high = bg_style_high
-    self.fg_style_high = fg_style_high
-
-class ProgramExit(Event):
-  pass
+ProgramExit = namedtuple('ProgramExit', [])
