@@ -55,7 +55,7 @@ class CommandProcessor(object):
         else:
             cur_file.pane = cur_file.PANE_HEX
 
-    @cmd(names=['set_pane'])
+    @cmd(names=['set_pane', 'pane'])
     def cmd_set_pane(self, pane):
         cur_file = self._app_state.current_file
         if pane == 'hex':
@@ -65,7 +65,7 @@ class CommandProcessor(object):
         else:
             raise RuntimeError('Bad pane (try with "hex" or "ascii")')
 
-    @cmd(names=['jump_to'])
+    @cmd(names=['jump_to', 'jump', 'jumpto', 'goto', 'go_to', 'g'])
     def cmd_jump_to(self, offset):
         offset = int(offset, 16)
         self._app_state.current_file.current_offset = offset
