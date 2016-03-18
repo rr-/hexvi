@@ -132,6 +132,10 @@ class CommandProcessor(object):
   def cmd_map_for_normal_mode(self, key_sequence_str, binding):
     self._map(key_sequence_str, binding, self._app_state.MODE_NORMAL)
 
+  @cmd(names=['imap'])
+  def cmd_map_for_insert_mode(self, key_sequence_str, binding):
+    self._map(key_sequence_str, binding, self._app_state.MODE_INSERT)
+
   @cmd(names=['rmap'])
   def cmd_map_for_replace_mode(self, key_sequence_str, binding):
     self._map(key_sequence_str, binding, self._app_state.MODE_REPLACE)

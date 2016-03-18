@@ -167,7 +167,7 @@ class Console(ReadlineEdit):
       self._app_state.mode = AppState.MODE_NORMAL
       return None
     if key == 'enter':
-      self._app_state.accept_raw_input(self.edit_text)
+      self._app_state.accept_command_input(self.edit_text)
     return super().keypress(pos, key)
 
   def get_prompt(self):
@@ -246,8 +246,8 @@ class MainWindow(urwid.Frame):
 
   def _mode_changed(self, evt):
     self._console.edit_text = ''
-    if evt.mode in [AppState.MODE_NORMAL, AppState.MODE_REPLACE]:
-      self._dump.editing = evt.mode in [AppState.MODE_REPLACE]
+    if evt.mode in [AppState.MODE_NORMAL, AppState.MODE_REPLACE, AppState.MODE_INSERT]:
+      self._dump.editing = evt.mode in [AppState.MODE_REPLACE, AppState.MODE_INSERT]
       self._console.prompt = ''
       self.focus.set_focus(0)
     else:

@@ -18,13 +18,15 @@ class AppState(object):
   MODE_SEARCH_FORWARD = 'search'
   MODE_SEARCH_BACKWARD = 'rsearch'
   MODE_REPLACE = 'replace'
+  MODE_INSERT = 'insert'
 
   ALL_MODES = [
     MODE_NORMAL,
     MODE_COMMAND,
     MODE_SEARCH_FORWARD,
     MODE_SEARCH_BACKWARD,
-    MODE_REPLACE]
+    MODE_REPLACE,
+    MODE_INSERT]
 
   def __init__(self, settings, args):
     self._window_size = (0, 0)
@@ -44,7 +46,7 @@ class AppState(object):
     self.hexvi_dir = os.path.dirname(__file__)
     self.resources_dir = os.path.join(self.hexvi_dir, 'share')
 
-  def accept_raw_input(self, text):
+  def accept_command_input(self, text):
     mode = self.mode
     self.mode = AppState.MODE_NORMAL
     if mode == self.MODE_COMMAND:
@@ -58,9 +60,14 @@ class AppState(object):
       raise NotImplementedError(text)
 
   def accept_byte_input(self, byte):
-    assert self.mode == self.MODE_REPLACE
-    self.cur_file.file_buffer.replace(self.cur_file.cur_offset, bytes([byte]))
-    self.cur_file.cur_offset += 1
+    if self.mode == self.MODE_REPLACE:
+      self.cur_file.file_buffer.replace(self.cur_file.cur_offset, bytes([byte]))
+      self.cur_file.cur_offset += 1
+    elif self.mode == self.MODE_INSERT:
+      self.cur_file.file_buffer.insert(self.cur_file.cur_offset, bytes([byte]))
+      self.cur_file.cur_offset += 1
+    else:
+      raise NotImplementedError(text)
 
   def get_window_size(self):
     return self._window_size
