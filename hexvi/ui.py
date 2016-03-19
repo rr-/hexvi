@@ -18,8 +18,9 @@ def is_ascii(c):
     return c >= 32 and c < 127
 
 class Dump(urwid.BoxWidget):
-    def __init__(self, app_state, file_state):
+    def __init__(self, cmd_processor, app_state, file_state):
         self.editing = False
+        self._cmd_processor = cmd_processor
         self._app_state = app_state
         self._file_state = file_state
         self._user_byte_input = ''
@@ -138,10 +139,11 @@ class Dump(urwid.BoxWidget):
                     self._user_byte_input += key
                     self._invalidate()
                     if len(self._user_byte_input) == 2:
-                        self._app_state.accept_byte_input(int(self._user_byte_input, 16))
+                        self._cmd_processor.accept_raw_byte_input(
+                            int(self._user_byte_input, 16))
                         self._user_byte_input = ''
             else:
-                self._app_state.accept_byte_input(ord(key))
+                self._cmd_processor.accept_raw_byte_input(ord(key))
             return None
         return key
 
@@ -159,8 +161,9 @@ class Dump(urwid.BoxWidget):
         return ''.join('%02X ' % c for c in buffer)
 
 class Console(ReadlineEdit):
-    def __init__(self, app_state, *args, **kwargs):
+    def __init__(self, cmd_processor, app_state, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._cmd_processor = cmd_processor
         self._app_state = app_state
 
     def keypress(self, pos, key):
@@ -168,7 +171,7 @@ class Console(ReadlineEdit):
             self._app_state.mode = AppState.MODE_NORMAL
             return None
         if key == 'enter':
-            self._app_state.accept_command_input(self.edit_text)
+            self._cmd_processor.accept_raw_command_input(self.edit_text)
         return super().keypress(pos, key)
 
     def get_prompt(self):
@@ -213,13 +216,13 @@ class DumbPile(urwid.Pile):
         return self.focus.keypress(pos, key)
 
 class MainWindow(urwid.Frame):
-    def __init__(self, app_state):
+    def __init__(self, cmd_processor, app_state):
         self._app_state = app_state
 
         self._header = urwid.Text(u'hexvi')
-        self._dump = Dump(self._app_state, self._app_state.current_file)
-        self._status_bar = StatusBar(self._app_state)
-        self._console = Console(self._app_state)
+        self._dump = Dump(cmd_processor, app_state, app_state.current_file)
+        self._status_bar = StatusBar(app_state)
+        self._console = Console(cmd_processor, app_state)
 
         urwid.Frame.__init__(
             self,
@@ -258,9 +261,9 @@ class MainWindow(urwid.Frame):
     caption = property(get_caption, set_caption)
 
 class Ui(object):
-    def __init__(self, app_state):
+    def __init__(self, cmd_processor, app_state):
         self._app_state = app_state
-        self._main_window = MainWindow(self._app_state)
+        self._main_window = MainWindow(cmd_processor, self._app_state)
         self._app_state.mode = AppState.MODE_NORMAL
 
         events.register_handler(events.ProgramExit, lambda *args: self._exit())

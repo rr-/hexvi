@@ -1,9 +1,9 @@
 #!/bin/python3
 import argparse
 import os
-import sys
 import hexvi.events as events
 from hexvi.app_state import AppState
+from hexvi.command_processor import CommandProcessor
 from hexvi.settings import Settings
 from hexvi.ui import Ui
 
@@ -25,14 +25,15 @@ def main():
     args = parse_args()
     settings = Settings()
     app_state = AppState(settings, args)
-    ui = Ui(app_state)
+    cmd_processor = CommandProcessor(app_state)
+    ui = Ui(cmd_processor, app_state)
 
     # initial configuration
-    app_state.cmd_processor.exec(
+    cmd_processor.exec(
         'source', os.path.join(app_state.resources_dir, 'hexvirc'))
     for path in ['~/.hexvirc', '~/.config/hexvirc']:
         if os.path.exists(os.path.expanduser(path)):
-            app_state.cmd_processor.exec('source', path)
+            cmd_processor.exec('source', path)
 
     # print collected messages, if any
     events.unregister_handler(events.PrintMessage, print_message_handler)

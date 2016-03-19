@@ -4,7 +4,6 @@ Application state - the heart of all state in hexvi.
 
 import os
 import hexvi.events as events
-from hexvi.command_processor import CommandProcessor
 from hexvi.file_state import FileState
 from hexvi.mappings import MappingCollection
 
@@ -38,7 +37,6 @@ class AppState(object):
         self._window_size = (0, 0)
         self._mode = AppState.MODE_COMMAND
         self.settings = settings
-        self.cmd_processor = CommandProcessor(self)
 
         try:
             # TODO: manage this once we get multiple files support
@@ -51,32 +49,6 @@ class AppState(object):
         self.mappings = {key: MappingCollection() for key in self.ALL_MODES}
         self.hexvi_dir = os.path.dirname(__file__)
         self.resources_dir = os.path.join(self.hexvi_dir, 'share')
-
-    def accept_command_input(self, text):
-        ''' Fired when the user runs a command in the UI command bar. '''
-        mode = self.mode
-        self.mode = AppState.MODE_NORMAL
-        if mode == self.MODE_COMMAND:
-            self.cmd_processor.exec_raw(text)
-        elif mode == self.MODE_SEARCH_FORWARD:
-            self.cmd_processor.exec('search', text)
-        elif mode == self.MODE_SEARCH_BACKWARD:
-            self.cmd_processor.exec('rsearch', text)
-        else:
-            raise NotImplementedError(text)
-
-    def accept_byte_input(self, byte):
-        ''' Fired when the user enters a byte in either HEX or ASCII dump. '''
-        if self.mode == self.MODE_REPLACE:
-            self.current_file.file_buffer.replace(
-                self.current_file.current_offset, bytes([byte]))
-            self.current_file.current_offset += 1
-        elif self.mode == self.MODE_INSERT:
-            self.current_file.file_buffer.insert(
-                self.current_file.current_offset, bytes([byte]))
-            self.current_file.current_offset += 1
-        else:
-            raise NotImplementedError()
 
     def get_window_size(self):
         ''' Returns the window size. '''

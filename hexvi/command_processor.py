@@ -1,5 +1,5 @@
 '''
-Application state - the heart of all commands in hexvi.
+Command processor - the thing that executes all the commands in hexvi.
 TODO: this is growing too big. Make this modular.
 '''
 
@@ -8,6 +8,7 @@ import shlex
 import regex
 import urwid
 import hexvi.events as events
+from hexvi.app_state import AppState
 
 class Command(object):
     def __init__(self, names, func):
@@ -26,6 +27,32 @@ class CommandProcessor(object):
         for prop in dir(self):
             if prop.startswith('cmd_'):
                 self._commands.append(getattr(self, prop))
+
+    def accept_raw_command_input(self, text):
+        ''' Fired when the user runs a command in the UI command bar. '''
+        mode = self._app_state.mode
+        self._app_state.mode = AppState.MODE_NORMAL
+        if mode == AppState.MODE_COMMAND:
+            self.exec_raw(text)
+        elif mode == AppState.MODE_SEARCH_FORWARD:
+            self.exec('search', text)
+        elif mode == AppState.MODE_SEARCH_BACKWARD:
+            self.exec('rsearch', text)
+        else:
+            raise NotImplementedError(text)
+
+    def accept_raw_byte_input(self, byte):
+        ''' Fired when the user enters a byte in either HEX or ASCII dump. '''
+        if self._app_state.mode == AppState.MODE_REPLACE:
+            self._app_state.current_file.file_buffer.replace(
+                self._app_state.current_file.current_offset, bytes([byte]))
+            self._app_state.current_file.current_offset += 1
+        elif self._app_state.mode == AppState.MODE_INSERT:
+            self._app_state.current_file.file_buffer.insert(
+                self._app_state.current_file.current_offset, bytes([byte]))
+            self._app_state.current_file.current_offset += 1
+        else:
+            raise NotImplementedError()
 
     def exec_raw(self, command_text):
         for chunk in regex.split(r'(?<!\\)\|', command_text):
