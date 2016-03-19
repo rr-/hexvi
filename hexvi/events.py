@@ -4,26 +4,39 @@ Definitions of events, and simple event handling / dispatching.
 
 from collections import namedtuple
 
-_registry = {}
+class EventRegistry(object):
+    _registry = {}
+
+    @staticmethod
+    def get_handlers(event_class):
+        return EventRegistry._registry.get(event_class, ())
+
+    @staticmethod
+    def register(event_class, handler):
+        if not event_class in EventRegistry._registry:
+            EventRegistry._registry[event_class] = []
+        EventRegistry._registry[event_class].append(handler)
+
+    @staticmethod
+    def unregister(event_class, handler):
+        try:
+            EventRegistry._registry[event_class].remove(handler)
+        except IndexError:
+            pass
 
 def notify(event):
     ''' Dispatches an event to all registered handlers. '''
     for event_class in event.__class__.__mro__:
-        for handler in _registry.get(event_class, ()):
+        for handler in EventRegistry.get_handlers(event_class):
             handler(event)
 
 def register_handler(event_class, handler):
     ''' Registers a handler that reacts to a given event. '''
-    if not event_class in _registry:
-        _registry[event_class] = []
-    _registry[event_class].append(handler)
+    EventRegistry.register(event_class, handler)
 
 def unregister_handler(event_class, handler):
     ''' Stops dispatching given event to a given handler. '''
-    try:
-        _registry[event_class].remove(handler)
-    except IndexError:
-        pass
+    EventRegistry.unregister(event_class, handler)
 
 PrintMessage = namedtuple('PrintMessage', ['message', 'style'])
 

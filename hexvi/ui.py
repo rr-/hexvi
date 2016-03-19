@@ -1,3 +1,5 @@
+''' The UI - powered by urwid. '''
+
 import math
 import regex
 import urwid
@@ -11,11 +13,11 @@ def trim_left(text, size):
         return text
     return ellipsis + text[len(ellipsis)+len(text)-size:]
 
-def is_hex(c):
-    return c in [ord(c) for c in list('0123456789abcdefABCDEF')]
+def is_hex(char):
+    return char in [ord(char) for char in list('0123456789abcdefABCDEF')]
 
-def is_ascii(c):
-    return c >= 32 and c < 127
+def is_ascii(char):
+    return char >= 32 and char < 127
 
 class Dump(urwid.BoxWidget):
     def __init__(self, cmd_processor, app_state, file_state):
