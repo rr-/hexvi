@@ -271,11 +271,11 @@ class Ui(object):
 
         self._loop = urwid.MainLoop(
             self._main_window, unhandled_input=self._key_pressed)
-        self._loop.screen.set_terminal_properties(
-            self._app_state.settings.term_colors)
 
     def run(self):
         self._main_window.started()
+        self._loop.screen.set_terminal_properties(
+            self._app_state.settings.term_colors)
         self._loop.run()
 
     def _color_changed(self, evt):
