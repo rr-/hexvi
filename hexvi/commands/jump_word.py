@@ -68,7 +68,7 @@ class JumpToPrevWordCommand(BaseCommand):
                 self._app_state.current_tab.file_buffer.get(
                     self._app_state.current_tab.current_offset - 1, 1))
             hexvi.util.scan_file(
-                self._app_state.current_tab.file_buffer,
+                self.current_tab.file_buffer,
                 SearchState.DIR_BACKWARD,
                 self._app_state.current_tab.current_offset,
                 1000,
