@@ -20,8 +20,9 @@ def is_ascii(char):
     return char >= 32 and char < 127
 
 class Dump(urwid.BoxWidget):
-    def __init__(self, cmd_processor, app_state, file_state):
+    def __init__(self, ui, cmd_processor, app_state, file_state):
         self.editing = False
+        self._ui = ui
         self._cmd_processor = cmd_processor
         self._app_state = app_state
         self._file_state = file_state
@@ -112,16 +113,19 @@ class Dump(urwid.BoxWidget):
         append(urwid.TextCanvas(hex_lines, hex_hilight), vis_col * 3)
         append(urwid.TextCanvas(asc_lines, asc_hilight), vis_col)
 
-        if self._file_state.pane == self._file_state.PANE_ASC:
-            canvas_def[2][0].cursor = cursor_pos
-        else:
-            canvas_def[1][0].cursor = cursor_pos
+        if not self._ui.blocked:
+            if self._file_state.pane == self._file_state.PANE_ASC:
+                canvas_def[2][0].cursor = cursor_pos
+            else:
+                canvas_def[1][0].cursor = cursor_pos
 
         multi_canvas = urwid.CanvasJoin(canvas_def)
         multi_canvas.pad_trim_left_right(0, size[0] - multi_canvas.cols())
         return multi_canvas
 
     def keypress(self, _, key):
+        if self._ui.blocked:
+            return None
         if self.editing:
             # if we're dealing with nontrivial keypress such as ctrl+something or tab
             if len(key) != 1:
@@ -163,12 +167,15 @@ class Dump(urwid.BoxWidget):
         return ''.join('%02X ' % c for c in buffer)
 
 class Console(ReadlineEdit):
-    def __init__(self, cmd_processor, app_state, *args, **kwargs):
+    def __init__(self, ui, cmd_processor, app_state, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._ui = ui
         self._cmd_processor = cmd_processor
         self._app_state = app_state
 
     def keypress(self, pos, key):
+        if self._ui.blocked:
+            return None
         if key == 'backspace' and not self.edit_text:
             self._app_state.mode = AppState.MODE_NORMAL
             return None
@@ -217,14 +224,76 @@ class DumbPile(urwid.Pile):
     def keypress(self, pos, key):
         return self.focus.keypress(pos, key)
 
+class SelectableText(urwid.Edit):
+    def valid_char(self, char):
+        return False
+
+class ConfirmationDialog(urwid.Overlay):
+    '''
+    Creates a dialog that can be used to confirm things.
+    '''
+    def __init__(self, ui, message, confirm_action, cancel_action):
+        message = ' %s ' % message
+        ui.blocked = True
+        self._ui = ui
+        self._old_widget = ui.loop.widget
+        self._confirm_action = confirm_action
+        self._cancel_action = cancel_action
+
+        column_items = []
+        for label, action in (('Yes', self.confirm), ('No', self.cancel)):
+            button = urwid.Button(
+                label, on_press=self._button_clicked, user_data=action)
+            column_items.append(urwid.Filler(
+                urwid.AttrMap(button, 'button', 'button-focused')))
+
+        widget = urwid.AttrMap(
+            urwid.LineBox(
+                urwid.Pile([
+                    urwid.Filler(urwid.Text(message)),
+                    urwid.Columns(column_items)
+                ])),
+            'window')
+
+        width = len(message) + 2
+        height = 5
+        super().__init__(
+            widget, ui.loop.widget, 'center', width, 'middle', height)
+
+        self._ui.loop.widget = self
+
+    def confirm(self):
+        self._confirm_action()
+        self.close()
+
+    def cancel(self):
+        self._cancel_action()
+        self.close()
+
+    def close(self):
+        self._ui.blocked = False
+        self._ui.loop.widget = self._old_widget
+
+    def keypress(self, pos, key):
+        if key in ['y', 'Y']:
+            self.confirm()
+        elif key in ['n', 'N', 'esc']:
+            self.cancel()
+        else:
+            return super().keypress(pos, key)
+
+    def _button_clicked(self, _, user_data):
+        user_data()
+
 class MainWindow(urwid.Frame):
-    def __init__(self, cmd_processor, app_state):
+    def __init__(self, ui, cmd_processor, app_state):
         self._app_state = app_state
 
+        self._ui = ui
         self._header = urwid.Text(u'hexvi')
-        self._dump = Dump(cmd_processor, app_state, app_state.current_file)
+        self._dump = Dump(ui, cmd_processor, app_state, app_state.current_file)
         self._status_bar = StatusBar(app_state)
-        self._console = Console(cmd_processor, app_state)
+        self._console = Console(ui, cmd_processor, app_state)
 
         urwid.Frame.__init__(
             self,
@@ -237,6 +306,7 @@ class MainWindow(urwid.Frame):
 
     def started(self):
         events.register_handler(events.PrintMessage, self._message_requested)
+        events.register_handler(events.ConfirmMessage, self._confirm_requested)
         events.register_handler(events.ModeChange, self._mode_changed)
 
     def get_caption(self):
@@ -249,6 +319,10 @@ class MainWindow(urwid.Frame):
     def _message_requested(self, evt):
         self._console.prompt = (evt.style, evt.message)
         self._console.edit_text = ''
+
+    def _confirm_requested(self, evt):
+        self._ui.show_confirmation_dialog(
+            evt.message, evt.confirm_action, evt.cancel_action)
 
     def _mode_changed(self, evt):
         self._console.edit_text = ''
@@ -264,8 +338,9 @@ class MainWindow(urwid.Frame):
 
 class Ui(object):
     def __init__(self, cmd_processor, app_state):
+        self.blocked = False
         self._app_state = app_state
-        self._main_window = MainWindow(cmd_processor, self._app_state)
+        self._main_window = MainWindow(self, cmd_processor, app_state)
         self._app_state.mode = AppState.MODE_NORMAL
 
         events.register_handler(events.ProgramExit, lambda *args: self._exit())
@@ -274,17 +349,20 @@ class Ui(object):
         # TODO: subscribe to changes of app_state.current_file
         self._main_window.caption = self._app_state.current_file.file_buffer.path
 
-        self._loop = urwid.MainLoop(
+        self.loop = urwid.MainLoop(
             self._main_window, unhandled_input=self._key_pressed)
+
+    def show_confirmation_dialog(self, message, confirm_action, cancel_action):
+        ConfirmationDialog(self, message, confirm_action, cancel_action)
 
     def run(self):
         self._main_window.started()
-        self._loop.screen.set_terminal_properties(
+        self.loop.screen.set_terminal_properties(
             self._app_state.settings.term_colors)
-        self._loop.run()
+        self.loop.run()
 
     def _color_changed(self, evt):
-        scr = self._loop.screen
+        scr = self.loop.screen
         scr.register_palette_entry(
             evt.target,
             evt.fg_style,
@@ -298,4 +376,5 @@ class Ui(object):
         raise urwid.ExitMainLoop()
 
     def _key_pressed(self, key):
-        self._app_state.mappings[self._app_state.mode].keypress(key)
+        if not self.blocked:
+            self._app_state.mappings[self._app_state.mode].keypress(key)

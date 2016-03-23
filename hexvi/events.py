@@ -40,6 +40,8 @@ def unregister_handler(event_class, handler):
 
 PrintMessage = namedtuple('PrintMessage', ['message', 'style'])
 
+ConfirmMessage = namedtuple('ConfirmMessage', ['message', 'confirm_action', 'cancel_action'])
+
 ModeChange = namedtuple('ModeChange', ['mode'])
 
 FileBufferChange = namedtuple('FileBufferChange', ['file_buffer'])
