@@ -11,9 +11,11 @@ from hexvi.command_registry import CommandRegistry
 from hexvi.app_state import AppState
 
 class CommandProcessor(object):
-    def __init__(self, app_state):
+    def __init__(self, app_state, tab_manager):
+        self._tab_manager = tab_manager
         self._app_state = app_state
-        self._commands = CommandRegistry.create_commands(self, app_state)
+        self._commands = CommandRegistry.create_commands(
+            app_state, self, tab_manager)
 
     def accept_raw_command_input(self, text):
         ''' Fired when the user runs a command in the UI command bar. '''
@@ -30,14 +32,15 @@ class CommandProcessor(object):
 
     def accept_raw_byte_input(self, byte):
         ''' Fired when the user enters a byte in either HEX or ASCII dump. '''
+        current_tab = self._tab_manager.current_tab
         if self._app_state.mode == AppState.MODE_REPLACE:
-            self._app_state.current_tab.file_buffer.replace(
-                self._app_state.current_tab.current_offset, bytes([byte]))
-            self._app_state.current_tab.current_offset += 1
+            current_tab.file_buffer.replace(
+                current_tab.current_offset, bytes([byte]))
+            current_tab.current_offset += 1
         elif self._app_state.mode == AppState.MODE_INSERT:
-            self._app_state.current_tab.file_buffer.insert(
-                self._app_state.current_tab.current_offset, bytes([byte]))
-            self._app_state.current_tab.current_offset += 1
+            current_tab.file_buffer.insert(
+                current_tab.current_offset, bytes([byte]))
+            current_tab.current_offset += 1
         else:
             raise NotImplementedError()
 

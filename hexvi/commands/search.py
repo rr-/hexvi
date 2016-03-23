@@ -2,10 +2,10 @@
 
 import regex
 import hexvi.util
-from hexvi.command_registry import BaseCommand
+from hexvi.command_registry import BaseTabCommand
 from hexvi.app_state import SearchState
 
-class BaseSearchCommand(BaseCommand):
+class BaseSearchCommand(BaseTabCommand):
     def _perform_user_search(self, direction, text):
         if not text:
             text = self._app_state.search_state.text
@@ -20,12 +20,12 @@ class BaseSearchCommand(BaseCommand):
             raise RuntimeError('No text to search for')
         max_match_size = self._app_state.settings.max_match_size
         if direction == SearchState.DIR_BACKWARD:
-            start_pos = self._app_state.current_tab.current_offset
+            start_pos = self.current_tab.current_offset
             pattern = '(?r)' + pattern
         else:
-            start_pos = self._app_state.current_tab.current_offset + 1
+            start_pos = self.current_tab.current_offset + 1
         if not hexvi.util.scan_file(
-                self._app_state.current_tab.file_buffer,
+                self.current_tab.file_buffer,
                 direction,
                 start_pos,
                 max_match_size,
@@ -38,7 +38,7 @@ class BaseSearchCommand(BaseCommand):
     def _search_callback(self, pattern, buffer, start_pos):
         match = regex.search(pattern.encode('utf-8'), buffer)
         if match:
-            self._app_state.current_tab.current_offset = start_pos + match.span()[0]
+            self.current_tab.current_offset = start_pos + match.span()[0]
             return True
         return False
 

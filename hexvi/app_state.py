@@ -4,7 +4,6 @@ Application state - the heart of all state in hexvi.
 
 import os
 import hexvi.events as events
-from hexvi.tab_state import TabState
 from hexvi.mappings import MappingCollection
 
 class SearchState(object):
@@ -38,13 +37,6 @@ class AppState(object):
         self._mode = AppState.MODE_COMMAND
         self.settings = settings
 
-        try:
-            # TODO: manage this once we get multiple files support
-            self._cur_tab = TabState(self, args.file)
-        except Exception as ex:
-            self._cur_tab = TabState(self)
-            events.notify(events.PrintMessage(str(ex), style='msg-error'))
-
         self.search_state = SearchState()
         self.mappings = {key: MappingCollection() for key in self.ALL_MODES}
         self.hexvi_dir = os.path.dirname(__file__)
@@ -60,16 +52,6 @@ class AppState(object):
             self._window_size = value
             events.notify(events.WindowSizeChange(value))
 
-    def get_current_tab(self):
-        ''' Returns the currently focused file state. '''
-        return self._cur_tab
-
-    def set_current_tab(self, value):
-        ''' Sets the currently focused file state. '''
-        if value != self._cur_tab:
-            self._cur_tab = value
-            events.notify(events.FileBufferChange(value))
-
     def get_mode(self):
         ''' Gets the current mode. '''
         return self._mode
@@ -80,6 +62,5 @@ class AppState(object):
             self._mode = value
             events.notify(events.ModeChange(value))
 
-    current_tab = property(get_current_tab, set_current_tab)
     mode = property(get_mode, set_mode)
     window_size = property(get_window_size, set_window_size)

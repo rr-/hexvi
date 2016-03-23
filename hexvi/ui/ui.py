@@ -9,17 +9,18 @@ from hexvi.ui.main_window import MainWindow
 class Ui(object):
     ''' The main UI facade. '''
 
-    def __init__(self, cmd_processor, app_state):
+    def __init__(self, tab_manager, cmd_processor, app_state):
         self.blocked = False
         self._app_state = app_state
-        self._main_window = MainWindow(self, cmd_processor, app_state)
+        self._main_window = MainWindow(
+            app_state, cmd_processor, tab_manager, self)
         self._app_state.mode = AppState.MODE_NORMAL
 
         events.register_handler(events.ProgramExit, lambda *args: self._exit())
         events.register_handler(events.ColorChange, self._color_changed)
 
         # TODO: subscribe to changes of app_state.current_tab
-        self._main_window.caption = self._app_state.current_tab.file_buffer.path
+        self._main_window.caption = tab_manager.current_tab.file_buffer.path
 
         self.loop = urwid.MainLoop(
             self._main_window, unhandled_input=self._key_pressed)

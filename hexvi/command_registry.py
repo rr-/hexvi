@@ -12,9 +12,9 @@ class CommandRegistry(object):
         CommandRegistry._registry.append(command_type)
 
     @staticmethod
-    def create_commands(command_processor, app_state):
+    def create_commands(app_state, command_processor, tab_manager):
         ''' Instantiates all registered commands. '''
-        return [command_type(command_processor, app_state) \
+        return [command_type(app_state, command_processor, tab_manager) \
             for command_type in CommandRegistry._registry]
 
 class BaseCommandMeta(type):
@@ -35,10 +35,20 @@ class BaseCommand(metaclass=BaseCommandMeta):
 
     names = []
 
-    def __init__(self, command_processor, app_state):
-        self._command_processor = command_processor
+    def __init__(self, app_state, command_processor, tab_manager):
         self._app_state = app_state
+        self._command_processor = command_processor
+        self._tab_manager = tab_manager
 
     def run(self, args):
         ''' Executes the command. Parameters can be anything. '''
+        raise NotImplementedError('...')
+
+class BaseTabCommand(BaseCommand):
+    ''' Offers a few utilities regarding tab management. '''
+    @property
+    def current_tab(self):
+        return self._tab_manager.current_tab
+
+    def run(self, args):
         raise NotImplementedError('...')

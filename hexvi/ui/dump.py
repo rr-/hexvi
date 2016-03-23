@@ -15,7 +15,7 @@ def is_ascii(char):
 class Dump(urwid.BoxWidget):
     ''' Hex / ASCII dump. '''
 
-    def __init__(self, ui, cmd_processor, app_state, tab_state):
+    def __init__(self, app_state, cmd_processor, tab_state, ui):
         self.editing = False
         self._ui = ui
         self._cmd_processor = cmd_processor

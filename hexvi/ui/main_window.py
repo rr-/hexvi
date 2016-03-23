@@ -12,13 +12,13 @@ from hexvi.ui.status_bar import StatusBar
 class MainWindow(urwid.Frame):
     ''' One top level widget to rule them all '''
 
-    def __init__(self, ui, cmd_processor, app_state):
+    def __init__(self, app_state, cmd_processor, tab_manager, ui):
         self._app_state = app_state
 
         self._ui = ui
         self._header = urwid.Text(u'hexvi')
-        self._dump = Dump(ui, cmd_processor, app_state, app_state.current_tab)
-        self._status_bar = StatusBar(app_state)
+        self._dump = Dump(app_state, cmd_processor, tab_manager.current_tab, ui)
+        self._status_bar = StatusBar(app_state, tab_manager)
         self._console = Console(ui, cmd_processor, app_state)
 
         urwid.Frame.__init__(

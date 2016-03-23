@@ -4,6 +4,7 @@ import os
 import hexvi.events as events
 from hexvi.app_state import AppState
 from hexvi.command_processor import CommandProcessor
+from hexvi.tab_manager import TabManager
 from hexvi.settings import Settings
 from hexvi.ui import Ui
 
@@ -25,8 +26,16 @@ def main():
     args = parse_args()
     settings = Settings()
     app_state = AppState(settings, args)
-    cmd_processor = CommandProcessor(app_state)
-    ui = Ui(cmd_processor, app_state)
+    tab_manager = TabManager(app_state)
+    cmd_processor = CommandProcessor(app_state, tab_manager)
+
+    try:
+        tab_manager.open_tab(args.file)
+    except Exception as ex:
+        tab_manager.open_tab()
+        events.notify(events.PrintMessage(str(ex), style='msg-error'))
+
+    ui = Ui(tab_manager, cmd_processor, app_state)
 
     # initial configuration
     cmd_processor.exec(
