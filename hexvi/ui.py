@@ -20,32 +20,32 @@ def is_ascii(char):
     return char >= 32 and char < 127
 
 class Dump(urwid.BoxWidget):
-    def __init__(self, ui, cmd_processor, app_state, file_state):
+    def __init__(self, ui, cmd_processor, app_state, tab_state):
         self.editing = False
         self._ui = ui
         self._cmd_processor = cmd_processor
         self._app_state = app_state
-        self._file_state = file_state
+        self._tab_state = tab_state
         self._user_byte_input = ''
         events.register_handler(events.PaneChange, lambda *_: self._invalidate())
         events.register_handler(events.OffsetChange, lambda *_: self._invalidate())
 
     def get_offset_digits(self):
-        return max(4, math.ceil(math.log(max(1, self._file_state.size), 16)))
+        return max(4, math.ceil(math.log(max(1, self._tab_state.size), 16)))
 
     def render(self, size, focus=False):
         off_digits = self.get_offset_digits()
         self._app_state.window_size = size
-        self._file_state.offset_digits = off_digits
+        self._tab_state.offset_digits = off_digits
 
-        cur_off = self._file_state.current_offset
-        top_off = self._file_state.top_offset
-        vis_col = self._file_state.visible_columns
-        vis_row = self._file_state.visible_rows
+        cur_off = self._tab_state.current_offset
+        top_off = self._tab_state.top_offset
+        vis_col = self._tab_state.visible_columns
+        vis_row = self._tab_state.visible_rows
 
-        vis_bytes = min(vis_col * vis_row + top_off, self._file_state.size) - top_off
+        vis_bytes = min(vis_col * vis_row + top_off, self._tab_state.size) - top_off
 
-        buffer = self._file_state.file_buffer.get(top_off, vis_bytes)
+        buffer = self._tab_state.file_buffer.get(top_off, vis_bytes)
         off_lines = []
         hex_lines = []
         asc_lines = []
@@ -71,8 +71,8 @@ class Dump(urwid.BoxWidget):
             search_buffer_size = search_buffer_shift + vis_col * vis_row + half_page
             search_buffer_size = min(
                 search_buffer_size + search_buffer_off,
-                self._file_state.size) - search_buffer_off
-            search_buffer = self._file_state.file_buffer.get(
+                self._tab_state.size) - search_buffer_off
+            search_buffer = self._tab_state.file_buffer.get(
                 search_buffer_off, search_buffer_size)
             pattern = self._app_state.search_state.text.encode('utf8')
             for m in regex.finditer(pattern, search_buffer):
@@ -93,11 +93,11 @@ class Dump(urwid.BoxWidget):
 
         rel_cur_off = cur_off - top_off
         cursor_pos = (rel_cur_off % vis_col, rel_cur_off // vis_col)
-        if self._file_state.pane == self._file_state.PANE_HEX:
+        if self._tab_state.pane == self._tab_state.PANE_HEX:
             cursor_pos = (cursor_pos[0] * 3, cursor_pos[1])
 
         if self._user_byte_input:
-            assert self._file_state.pane == self._file_state.PANE_HEX
+            assert self._tab_state.pane == self._tab_state.PANE_HEX
             cursor_pos = (cursor_pos[0] + len(self._user_byte_input), cursor_pos[1])
             x, y = cursor_pos
             hex_lines[y] = hex_lines[y][:x-1] \
@@ -114,7 +114,7 @@ class Dump(urwid.BoxWidget):
         append(urwid.TextCanvas(asc_lines, asc_hilight), vis_col)
 
         if not self._ui.blocked:
-            if self._file_state.pane == self._file_state.PANE_ASC:
+            if self._tab_state.pane == self._tab_state.PANE_ASC:
                 canvas_def[2][0].cursor = cursor_pos
             else:
                 canvas_def[1][0].cursor = cursor_pos
@@ -140,7 +140,7 @@ class Dump(urwid.BoxWidget):
                 else:
                     return key
 
-            if self._file_state.pane == self._file_state.PANE_HEX:
+            if self._tab_state.pane == self._tab_state.PANE_HEX:
                 if is_hex(ord(key)):
                     self._user_byte_input += key
                     self._invalidate()
@@ -154,7 +154,7 @@ class Dump(urwid.BoxWidget):
         return key
 
     def _format_offset_row(self, offset):
-        if offset - 1 < self._file_state.size:
+        if offset - 1 < self._tab_state.size:
             return '%0*X' % (self.get_offset_digits(), offset)
         return ''
 
@@ -203,14 +203,14 @@ class StatusBar(urwid.Widget):
 
     def render(self, size, focus=False):
         right = '0x%X / 0x%X (%d%%)' % (
-            self._app_state.current_file.current_offset,
-            self._app_state.current_file.size,
-            self._app_state.current_file.current_offset * (
-                100.0 / max(1, self._app_state.current_file.size)))
+            self._app_state.current_tab.current_offset,
+            self._app_state.current_tab.size,
+            self._app_state.current_tab.current_offset * (
+                100.0 / max(1, self._app_state.current_tab.size)))
 
         left = '[%s] ' % self._app_state.mode.upper()
         left += trim_left(
-            self._app_state.current_file.file_buffer.path or '[No Name]',
+            self._app_state.current_tab.file_buffer.path or '[No Name]',
             size[0] - (len(right) + len(left) + 3))
 
         left_canvas = urwid.TextCanvas([left.encode('utf-8')])
@@ -291,7 +291,7 @@ class MainWindow(urwid.Frame):
 
         self._ui = ui
         self._header = urwid.Text(u'hexvi')
-        self._dump = Dump(ui, cmd_processor, app_state, app_state.current_file)
+        self._dump = Dump(ui, cmd_processor, app_state, app_state.current_tab)
         self._status_bar = StatusBar(app_state)
         self._console = Console(ui, cmd_processor, app_state)
 
@@ -346,8 +346,8 @@ class Ui(object):
         events.register_handler(events.ProgramExit, lambda *args: self._exit())
         events.register_handler(events.ColorChange, self._color_changed)
 
-        # TODO: subscribe to changes of app_state.current_file
-        self._main_window.caption = self._app_state.current_file.file_buffer.path
+        # TODO: subscribe to changes of app_state.current_tab
+        self._main_window.caption = self._app_state.current_tab.file_buffer.path
 
         self.loop = urwid.MainLoop(
             self._main_window, unhandled_input=self._key_pressed)

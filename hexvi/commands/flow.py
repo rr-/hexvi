@@ -22,11 +22,10 @@ class TogglePaneCommand(BaseCommand):
     names = ['toggle_pane', 'toggle_panes']
 
     def run(self, args):
-        cur_file = self._app_state.current_file
-        if cur_file.pane == cur_file.PANE_HEX:
-            cur_file.pane = cur_file.PANE_ASC
+        if self._app_state.current_tab.pane == self._app_state.current_tab.PANE_HEX:
+            self._app_state.current_tab.pane = self._app_state.current_tab.PANE_ASC
         else:
-            cur_file.pane = cur_file.PANE_HEX
+            self._app_state.current_tab.pane = self._app_state.current_tab.PANE_HEX
 
 class SetPaneCommand(BaseCommand):
     ''' Sets the pane to either hex and ascii dump. '''
@@ -34,11 +33,10 @@ class SetPaneCommand(BaseCommand):
 
     def run(self, args):
         pane, = args
-        cur_file = self._app_state.current_file
         if pane == 'hex':
-            cur_file.pane = cur_file.PANE_HEX
+            self._app_state.current_tab.pane = self._app_state.current_tab.PANE_HEX
         elif pane in ['ascii', 'asc']:
-            cur_file.pane = cur_file.PANE_ASC
+            self._app_state.current_tab.pane = self._app_state.current_tab.PANE_ASC
         else:
             raise RuntimeError('Bad pane (try with "hex" or "ascii")')
 

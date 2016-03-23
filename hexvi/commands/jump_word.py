@@ -21,10 +21,10 @@ def _forward_word_callback(
     for i in indices:
         char_under_cursor = buffer[i:i+1]
         if not regex.match(pattern.encode('utf-8'), char_under_cursor):
-            app_state.current_file.current_offset = start_pos + i
+            app_state.current_tab.current_offset = start_pos + i
             return True
-        if end_pos == app_state.current_file.size:
-            app_state.current_file.current_offset = app_state.current_file.size
+        if end_pos == app_state.current_tab.size:
+            app_state.current_tab.current_offset = app_state.current_tab.size
     return False
 
 def _backward_word_callback(app_state, pattern, buffer, start_pos):
@@ -33,10 +33,10 @@ def _backward_word_callback(app_state, pattern, buffer, start_pos):
         if i - 1 >= 0:
             char_under_cursor = buffer[i-1:i]
             if not regex.match(pattern.encode('utf-8'), char_under_cursor):
-                app_state.current_file.current_offset = start_pos + i
+                app_state.current_tab.current_offset = start_pos + i
                 return True
         if start_pos == 0:
-            app_state.current_file.current_offset = 0
+            app_state.current_tab.current_offset = 0
     return False
 
 class JumpToNextWordCommand(BaseCommand):
@@ -45,12 +45,12 @@ class JumpToNextWordCommand(BaseCommand):
         repeat = 1 if not args else int(args[0])
         for _ in range(repeat):
             pattern = _choose_word_class(
-                self._app_state.current_file.file_buffer.get(
-                    self._app_state.current_file.current_offset, 1))
+                self._app_state.current_tab.file_buffer.get(
+                    self._app_state.current_tab.current_offset, 1))
             hexvi.util.scan_file(
-                self._app_state.current_file.file_buffer,
+                self._app_state.current_tab.file_buffer,
                 SearchState.DIR_FORWARD,
-                self._app_state.current_file.current_offset,
+                self._app_state.current_tab.current_offset,
                 1000,
                 1000,
                 lambda buffer, start_pos, end_pos, direction: \
@@ -62,15 +62,15 @@ class JumpToPrevWordCommand(BaseCommand):
     def run(self, args):
         repeat = 1 if not args else int(args[0])
         for _ in range(repeat):
-            if self._app_state.current_file.current_offset == 0:
+            if self._app_state.current_tab.current_offset == 0:
                 return
             pattern = _choose_word_class(
-                self._app_state.current_file.file_buffer.get(
-                    self._app_state.current_file.current_offset - 1, 1))
+                self._app_state.current_tab.file_buffer.get(
+                    self._app_state.current_tab.current_offset - 1, 1))
             hexvi.util.scan_file(
-                self._app_state.cur_file.file_buffer,
+                self._app_state.current_tab.file_buffer,
                 SearchState.DIR_BACKWARD,
-                self._app_state.current_file.current_offset,
+                self._app_state.current_tab.current_offset,
                 1000,
                 1000,
                 lambda buffer, start_pos, end_pos, direction: \

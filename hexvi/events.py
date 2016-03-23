@@ -48,9 +48,9 @@ FileBufferChange = namedtuple('FileBufferChange', ['file_buffer'])
 
 WindowSizeChange = namedtuple('WindowSizeChange', ['size'])
 
-OffsetChange = namedtuple('OffsetChange', ['file_state'])
+OffsetChange = namedtuple('OffsetChange', ['tab_state'])
 
-PaneChange = namedtuple('PaneChange', ['file_state'])
+PaneChange = namedtuple('PaneChange', ['tab_state'])
 
 ColorChange = namedtuple(
     'ColorChange',

@@ -1,5 +1,5 @@
 '''
-The file state.
+Tab state, i.e. one widget for the file buffer.
 Contains visual information on the file (such as currently selected offset
 etc.), and link to the file buffer.
 '''
@@ -7,7 +7,7 @@ etc.), and link to the file buffer.
 import hexvi.events as events
 from hexvi.file_buffer import FileBuffer
 
-class FileState(object):
+class TabState(object):
     PANE_HEX = 'hex'
     PANE_ASC = 'asc'
 

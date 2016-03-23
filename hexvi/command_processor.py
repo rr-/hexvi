@@ -31,13 +31,13 @@ class CommandProcessor(object):
     def accept_raw_byte_input(self, byte):
         ''' Fired when the user enters a byte in either HEX or ASCII dump. '''
         if self._app_state.mode == AppState.MODE_REPLACE:
-            self._app_state.current_file.file_buffer.replace(
-                self._app_state.current_file.current_offset, bytes([byte]))
-            self._app_state.current_file.current_offset += 1
+            self._app_state.current_tab.file_buffer.replace(
+                self._app_state.current_tab.current_offset, bytes([byte]))
+            self._app_state.current_tab.current_offset += 1
         elif self._app_state.mode == AppState.MODE_INSERT:
-            self._app_state.current_file.file_buffer.insert(
-                self._app_state.current_file.current_offset, bytes([byte]))
-            self._app_state.current_file.current_offset += 1
+            self._app_state.current_tab.file_buffer.insert(
+                self._app_state.current_tab.current_offset, bytes([byte]))
+            self._app_state.current_tab.current_offset += 1
         else:
             raise NotImplementedError()
 
