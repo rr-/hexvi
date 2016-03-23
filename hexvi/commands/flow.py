@@ -21,5 +21,5 @@ class EchoCommand(BaseCommand):
     ''' Prints a message near the command bar. '''
     names = ['echo']
     def run(self, args):
-        message, = args[0]
+        message = ' '.join(args)
         events.notify(events.PrintMessage(message, style='msg-info'))
