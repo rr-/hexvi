@@ -47,13 +47,9 @@ class Dump(urwid.BoxWidget):
         for i in range(vis_row):
             row_offset = top_off + i * vis_col
             row_buffer = buffer[i*vis_col:(i+1)*vis_col]
-            off_lines.append(self._format_offset_row(row_offset))
-            hex_lines.append(self._format_hex_row(row_buffer))
-            asc_lines.append(self._format_asc_row(row_buffer))
-
-        off_lines = [l.encode('utf-8') for l in off_lines]
-        hex_lines = [(l + ' ').encode('utf-8') for l in hex_lines]
-        asc_lines = [(l + ' ').encode('utf-8') for l in asc_lines]
+            off_lines.append(self._format_offset_row(row_offset).encode('utf-8'))
+            hex_lines.append(self._format_hex_row(row_buffer).encode('utf-8'))
+            asc_lines.append(self._format_asc_row(row_buffer).encode('utf-8'))
 
         off_hilight = [[] for l in off_lines]
         hex_hilight = [[('hex', 3) for i in range(vis_col)] for l in hex_lines]
@@ -153,10 +149,12 @@ class Dump(urwid.BoxWidget):
             return '%0*X' % (self.get_offset_digits(), offset)
         return ''
 
-    @staticmethod
-    def _format_asc_row(buffer):
-        return ''.join('%c' % c if is_ascii(c) else '.' for c in buffer)
+    def _format_asc_row(self, buffer):
+        return '{:<{vis_col}}'.format(
+            ''.join('%c' % c if is_ascii(c) else '.' for c in buffer),
+            vis_col=self._tab_state.visible_columns)
 
-    @staticmethod
-    def _format_hex_row(buffer):
-        return ''.join('%02X ' % c for c in buffer)
+    def _format_hex_row(self, buffer):
+        return '{:<{vis_col}}'.format(
+            ''.join('%02X ' % c for c in buffer),
+            vis_col=self._tab_state.visible_columns*3)
