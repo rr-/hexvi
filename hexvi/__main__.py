@@ -29,12 +29,6 @@ def main():
     tab_manager = TabManager(app_state)
     cmd_processor = CommandProcessor(app_state, tab_manager)
 
-    try:
-        tab_manager.open_tab(args.file)
-    except Exception as ex:
-        tab_manager.open_tab()
-        events.notify(events.PrintMessage(str(ex), style='msg-error'))
-
     ui = Ui(tab_manager, cmd_processor, app_state)
 
     # initial configuration
@@ -43,6 +37,12 @@ def main():
     for path in ['~/.hexvirc', '~/.config/hexvirc']:
         if os.path.exists(os.path.expanduser(path)):
             cmd_processor.exec('source', path)
+
+    try:
+        tab_manager.open_tab(args.file)
+    except Exception as ex:
+        tab_manager.open_tab()
+        events.notify(events.PrintMessage(str(ex), style='msg-error'))
 
     # print collected messages, if any
     events.unregister_handler(events.PrintMessage, print_message_handler)

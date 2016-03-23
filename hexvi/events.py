@@ -44,7 +44,7 @@ ConfirmMessage = namedtuple('ConfirmMessage', ['message', 'confirm_action', 'can
 
 ModeChange = namedtuple('ModeChange', ['mode'])
 
-FileBufferChange = namedtuple('FileBufferChange', ['file_buffer'])
+TabChange = namedtuple('TabChange', ['tab_state'])
 
 WindowSizeChange = namedtuple('WindowSizeChange', ['size'])
 

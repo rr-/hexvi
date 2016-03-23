@@ -3,6 +3,7 @@ Tab manager - responsible for managing tab lifecycles.
 '''
 
 import hexvi.events as events
+from hexvi.app_state import SearchState
 from hexvi.tab_state import TabState
 
 class TabManager(object):
@@ -10,24 +11,34 @@ class TabManager(object):
 
     def __init__(self, app_state):
         self.tabs = []
-        self._current_tab = None
+        self._tab_idx = None
         self._app_state = app_state
 
-    def get_current_tab(self):
-        ''' Returns the currently focused file state. '''
-        return self._current_tab
+    @property
+    def current_tab(self):
+        return None if self._tab_idx is None else self.tabs[self._tab_idx]
 
-    def set_current_tab(self, value):
-        ''' Sets the currently focused file state. '''
-        if value != self._current_tab:
-            self._current_tab = value
-            events.notify(events.FileBufferChange(value))
+    def close_current_tab(self):
+        # TODO: check if the file was modified
+        self._do_close_current_tab()
+
+    def _do_close_current_tab(self):
+        self.tabs = self.tabs[:self._tab_idx] + self.tabs[self._tab_idx+1:]
+        if self._tab_idx >= len(self.tabs):
+            self._tab_idx = len(self.tabs) - 1
+        if not self.tabs:
+            events.notify(events.ProgramExit())
+        events.notify(events.TabChange(self.current_tab))
 
     def open_tab(self, path=None):
         if path:
             self.tabs.append(TabState(self._app_state, path))
         else:
             self.tabs.append(TabState(self._app_state))
-        self.current_tab = self.tabs[-1]
+        self._tab_idx = len(self.tabs) - 1
+        events.notify(events.TabChange(self.current_tab))
 
-    current_tab = property(get_current_tab, set_current_tab)
+    def cycle_tabs(self, dir):
+        self._tab_idx += 1 if dir == SearchState.DIR_FORWARD else -1
+        self._tab_idx %= len(self.tabs)
+        events.notify(events.TabChange(self.current_tab))

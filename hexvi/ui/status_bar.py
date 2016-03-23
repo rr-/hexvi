@@ -13,6 +13,7 @@ class StatusBar(urwid.Widget):
         self._tab_manager = tab_manager
         events.register_handler(events.OffsetChange, lambda *_: self._invalidate())
         events.register_handler(events.ModeChange, lambda *_: self._invalidate())
+        events.register_handler(events.TabChange, lambda *_: self._invalidate())
 
     def rows(self, size, focus=False):
         return 1

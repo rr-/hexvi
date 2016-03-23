@@ -17,7 +17,7 @@ class TabState(object):
         self._pane = self.PANE_HEX
         self._top_offset = 0
         self._cur_offset = 0
-        self._window_size = (0, 0)
+        self._window_size = app_state.window_size
         self._offset_digits = 0
         events.register_handler(events.WindowSizeChange, self.window_size_changed)
 

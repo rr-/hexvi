@@ -5,7 +5,7 @@ from hexvi.command_registry import BaseCommand
 
 class QuitCommand(BaseCommand):
     ''' Quits the application immediately. '''
-    names = ['q', 'quit']
+    names = ['q!', 'quit!']
 
     def run(self, _args):
         events.notify(events.ProgramExit())
