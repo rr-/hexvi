@@ -8,6 +8,7 @@ class ReadlineEdit(urwid.Edit):
     An urwid's Edit specialization that tries to emulate libreadline's
     capabilities. Extra useful when doing stuff in command mode.
     '''
+
     def __init__(self, *args, **kwargs):
         urwid.Edit.__init__(self, *args, multiline=False, **kwargs)
         self._bindings = {

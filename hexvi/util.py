@@ -36,3 +36,10 @@ def scan_file(file_buffer, direction, start_pos, buffer_size, jump_size, functor
     except (KeyboardInterrupt, SystemExit):
         raise RuntimeError('Aborted')
     return False
+
+def trim_left(text, size):
+    ''' Trims the text to given size, adding ellipsis if necessary '''
+    ellipsis = '(...)'
+    if len(text) <= size:
+        return text
+    return ellipsis + text[len(ellipsis)+len(text)-size:]
