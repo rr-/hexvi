@@ -3,7 +3,7 @@ import os
 
 data_files = []
 for root, dirs, files in os.walk('hexvi/share'):
-  data_files.append((root, list(os.path.join(root, file) for file in files)))
+    data_files.append((root, list(os.path.join(root, file) for file in files)))
 
 setup(
     name             = 'hexvi',
