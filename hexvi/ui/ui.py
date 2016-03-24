@@ -1,4 +1,4 @@
-''' Main UI facade '''
+''' Exports Ui '''
 
 import urwid
 import hexvi.events as events

@@ -1,4 +1,4 @@
-''' libreadline input emulation. '''
+''' libreadline input emulation '''
 
 import re
 import urwid

@@ -1,11 +1,11 @@
-''' The statusbar widget. '''
+''' Exports StatusBar. '''
 
 import urwid
 import hexvi.events as events
 import hexvi.util as util
 
 class StatusBar(urwid.Widget):
-    ''' The thing that renders file size etc. at the bottom '''
+    ''' The thing that renders file size etc. at the bottom of the window. '''
 
     def __init__(self, app_state, tab_manager, *args, **kwargs):
         urwid.Widget.__init__(self, *args, **kwargs)

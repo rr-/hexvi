@@ -5,8 +5,9 @@ import hexvi.util
 from hexvi.command_registry import BaseTabCommand
 from hexvi.app_state import SearchState
 
-class BaseSearchCommand(BaseTabCommand):
-    def _perform_user_search(self, direction, text):
+class _BaseSearchCommand(BaseTabCommand):
+    def perform_user_search(self, direction, text):
+        ''' High-level facade for text search in given direction '''
         if not text:
             text = self._app_state.search_state.text
             direction = self._app_state.search_state.direction ^ direction ^ 1
@@ -16,6 +17,7 @@ class BaseSearchCommand(BaseTabCommand):
         return self._perform_stateless_search(direction, text)
 
     def _perform_stateless_search(self, direction, pattern):
+        ''' Implementation of incremental text search '''
         if not pattern:
             raise RuntimeError('No text to search for')
         max_match_size = self._app_state.settings.max_match_size
@@ -45,18 +47,18 @@ class BaseSearchCommand(BaseTabCommand):
     def run(self, args):
         raise NotImplementedError()
 
-class ForwardSearchCommand(BaseSearchCommand):
+class ForwardSearchCommand(_BaseSearchCommand):
     names = ['search']
     def run(self, args):
         text = '' if len(args) < 1 else args[0]
         repeat = 1 if len(args) < 2 else int(args[1])
         for _ in range(repeat):
-            self._perform_user_search(SearchState.DIR_FORWARD, text)
+            self.perform_user_search(SearchState.DIR_FORWARD, text)
 
-class BackwardSearchCommand(BaseSearchCommand):
+class BackwardSearchCommand(_BaseSearchCommand):
     names = ['rsearch']
     def run(self, args):
         text = '' if len(args) < 1 else args[0]
         repeat = 1 if len(args) < 2 else int(args[1])
         for _ in range(repeat):
-            self._perform_user_search(SearchState.DIR_BACKWARD, text)
+            self.perform_user_search(SearchState.DIR_BACKWARD, text)

@@ -15,7 +15,11 @@ class SearchState(object):
         self.text = None
 
 class AppState(object):
-    ''' The main state. '''
+    '''
+    The main state.
+    This class should be used to contain scalars rather than big and important
+    objects such as CommandProcessor.
+    '''
 
     MODE_NORMAL = 'normal'
     MODE_COMMAND = 'command'

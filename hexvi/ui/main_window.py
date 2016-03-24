@@ -1,4 +1,4 @@
-''' Main main window widget. '''
+''' Exports MainWindow. '''
 
 import regex
 import urwid
@@ -10,7 +10,7 @@ from hexvi.ui.misc import DumbPile
 from hexvi.ui.status_bar import StatusBar
 
 class MainWindow(urwid.Frame):
-    ''' One top level widget to rule them all '''
+    ''' One top level widget to rule them all! '''
 
     def __init__(self, app_state, cmd_processor, tab_manager, ui):
         self._app_state = app_state

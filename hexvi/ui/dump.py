@@ -1,10 +1,9 @@
-''' The dump widget. '''
+''' Exports Dump. '''
 
 import math
 import regex
 import urwid
 import hexvi.events as events
-from hexvi.app_state import AppState
 
 def is_hex(char):
     return char in [ord(char) for char in list('0123456789abcdefABCDEF')]
@@ -48,46 +47,9 @@ class Dump(urwid.BoxWidget):
         vis_bytes = min(vis_col * vis_row + top_off, self.tab_state.size) - top_off
 
         buffer = self.tab_state.file_buffer.get(top_off, vis_bytes)
-        off_lines = []
-        hex_lines = []
-        asc_lines = []
-        for i in range(vis_row):
-            row_offset = top_off + i * vis_col
-            row_buffer = buffer[i*vis_col:(i+1)*vis_col]
-            off_lines.append(self._format_offset_row(row_offset).encode('utf-8'))
-            hex_lines.append(self._format_hex_row(row_buffer).encode('utf-8'))
-            asc_lines.append(self._format_asc_row(row_buffer).encode('utf-8'))
-
-        off_hilight = [[] for l in off_lines]
-        hex_hilight = [[('hex', 3) for i in range(vis_col)] for l in hex_lines]
-        asc_hilight = [[('asc', 1) for i in range(vis_col)] for l in asc_lines]
-
-        if self._app_state.search_state.text:
-            half_page = vis_col * vis_row // 2
-            search_buffer_off = max(top_off - half_page, 0)
-            search_buffer_shift = top_off - search_buffer_off
-            search_buffer_size = search_buffer_shift + vis_col * vis_row + half_page
-            search_buffer_size = min(
-                search_buffer_size + search_buffer_off,
-                self.tab_state.size) - search_buffer_off
-            search_buffer = self.tab_state.file_buffer.get(
-                search_buffer_off, search_buffer_size)
-            pattern = self._app_state.search_state.text.encode('utf8')
-            for m in regex.finditer(pattern, search_buffer):
-                for i in range(len(m.group())):
-                    rel_cur_off = m.start() + i - search_buffer_shift
-                    y = rel_cur_off // vis_col
-                    x = rel_cur_off % vis_col
-                    if y >= 0    and y < vis_row:
-                        asc_hilight[y][x] = ('hex-search', 1)
-                        hex_hilight[y][x] = ('asc-search', 3)
-
-        for y in range(vis_row):
-            off_hilight[y] = [('off', 1) for i in range(len(off_lines[y]))]
-            for x in range(len(off_lines[y])):
-                if off_lines[y][x:x+1] != b'0':
-                    break
-                off_hilight[y][x] = ('off0', 1)
+        off_lines, hex_lines, asc_lines = self._render_lines(buffer)
+        off_hilight, hex_hilight, asc_hilight = self._render_hilight(
+            off_lines, hex_lines, asc_lines)
 
         rel_cur_off = cur_off - top_off
         cursor_pos = (rel_cur_off % vis_col, rel_cur_off // vis_col)
@@ -97,10 +59,10 @@ class Dump(urwid.BoxWidget):
         if self._user_byte_input:
             assert self.tab_state.pane == self.tab_state.PANE_HEX
             cursor_pos = (cursor_pos[0] + len(self._user_byte_input), cursor_pos[1])
-            x, y = cursor_pos
-            hex_lines[y] = hex_lines[y][:x-1] \
+            pos_x, pos_y = cursor_pos
+            hex_lines[pos_y] = hex_lines[pos_y][:pos_x-1] \
                 + self._user_byte_input.encode('utf-8') \
-                + hex_lines[y][x:]
+                + hex_lines[pos_y][pos_x:]
 
         canvas_def = []
         Dump.pos = 0
@@ -120,6 +82,58 @@ class Dump(urwid.BoxWidget):
         multi_canvas = urwid.CanvasJoin(canvas_def)
         multi_canvas.pad_trim_left_right(0, size[0] - multi_canvas.cols())
         return multi_canvas
+
+    def _render_lines(self, buffer):
+        off_lines = []
+        hex_lines = []
+        asc_lines = []
+        top_off = self.tab_state.top_offset
+        vis_col = self.tab_state.visible_columns
+        for i in range(self.tab_state.visible_rows):
+            row_offset = top_off + i * vis_col
+            row_buffer = buffer[i*vis_col:(i+1)*vis_col]
+            off_lines.append(self._format_offset_row(row_offset).encode('utf-8'))
+            hex_lines.append(self._format_hex_row(row_buffer).encode('utf-8'))
+            asc_lines.append(self._format_asc_row(row_buffer).encode('utf-8'))
+        return off_lines, hex_lines, asc_lines
+
+    def _render_hilight(self, off_lines, hex_lines, asc_lines):
+        vis_row = self.tab_state.visible_rows
+        vis_col = self.tab_state.visible_columns
+        top_off = self.tab_state.top_offset
+
+        off_hilight = [[] for l in off_lines]
+        hex_hilight = [[('hex', 3) for i in range(vis_col)] for l in hex_lines]
+        asc_hilight = [[('asc', 1) for i in range(vis_col)] for l in asc_lines]
+
+        if self._app_state.search_state.text:
+            pattern = self._app_state.search_state.text.encode('utf8')
+            half_page = vis_col * vis_row // 2
+            search_buffer_off = max(top_off - half_page, 0)
+            search_buffer_shift = top_off - search_buffer_off
+            search_buffer_size = search_buffer_shift + vis_col * vis_row + half_page
+            search_buffer_size = min(
+                search_buffer_size + search_buffer_off, self.tab_state.size) \
+                - search_buffer_off
+            search_buffer = self.tab_state.file_buffer.get(
+                search_buffer_off, search_buffer_size)
+            for match in regex.finditer(pattern, search_buffer):
+                for i in range(len(match.group())):
+                    rel_cur_off = match.start() + i - search_buffer_shift
+                    pos_y = rel_cur_off // vis_col
+                    pos_x = rel_cur_off % vis_col
+                    if pos_y >= 0 and pos_y < vis_row:
+                        asc_hilight[pos_y][pos_x] = ('hex-search', 1)
+                        hex_hilight[pos_y][pos_x] = ('asc-search', 3)
+
+        for pos_y in range(vis_row):
+            off_hilight[pos_y] = [('off', 1) for i in range(len(off_lines[pos_y]))]
+            for pos_x in range(len(off_lines[pos_y])):
+                if off_lines[pos_y][pos_x:pos_x+1] != b'0':
+                    break
+                off_hilight[pos_y][pos_x] = ('off0', 1)
+
+        return off_hilight, hex_hilight, asc_hilight
 
     def keypress(self, _, key):
         if self._ui.blocked:

@@ -7,11 +7,11 @@ def scan_file(file_buffer, direction, start_pos, buffer_size, jump_size, functor
     Scans the file incrementally, running given function on the content
     parts.
 
-    @param functor: the function to run. returning truthy value stops the scan.
-    @param direction: whether to search forward or backward.
-    @param start_pos: where to start the scan at.
-    @param bufer_size: preferred content size to send to functor.
-    #param jump_size: how many bytes to advance after each iteration.
+    direction -- whether to search forward or backward.
+    start_pos -- where to start the scan at.
+    bufer_size -- preferred content size to send to functor.
+    jump_size -- how many bytes to advance after each iteration.
+    functor -- the function to run. returning truthy value stops the scan.
     '''
     file_size = file_buffer.size
     try:

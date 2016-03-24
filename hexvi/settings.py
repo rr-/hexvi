@@ -1,9 +1,10 @@
-''' User settings stuff. '''
+''' Exports Settings. '''
 
 from hexvi.app_state import AppState
 
 class Settings(object):
-    ''' User settings container. '''
+    ''' A container for all the User settings. '''
+
     def __init__(self):
         self.scrolloff = 0
         self.max_match_size = 8192

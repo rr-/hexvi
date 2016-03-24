@@ -1,24 +1,13 @@
 '''
-The file buffer.
-
-It implements large file support by dividing the file into dynamic ranges
-(windows). By default, the whole file is represented by one big content window
-that uses the underlying file to look up things.
-
-Editing the file, rather than operating on the HDD or placing the whole thing
-into the RAM, manipulates those content windows. When the user enters a text,
-the buffer splits existing content windows and introduces a new window that
-holds the text supplied by the user in the RAM.
-
-When the UI requests the file buffer to provide content at specific offset and
-of specific size, the file buffer "compiles" the final output by iterating over
-the relevant windows.
+Exports FileBuffer.
+The extra Window classes should be considered implementation details.
 '''
 
 import os
 
 class Window(object):
     ''' Represents a range, which has size and offset. '''
+
     def __init__(self, start_offset, size):
         self._start_offset = start_offset
         self._size = size
@@ -70,6 +59,7 @@ class ContentWindow(Window):
 
 class BufferContentWindow(ContentWindow):
     ''' A Window that has content placed in the memory. '''
+
     def __init__(self, offset, buffer):
         super().__init__(offset, len(buffer))
         self._buffer = buffer
@@ -97,6 +87,7 @@ class BufferContentWindow(ContentWindow):
 
 class FileContentWindow(ContentWindow):
     ''' A Window that has content placed within a physical file. '''
+
     def __init__(self, offset, size, file_handle, file_offset):
         super().__init__(offset, size)
         self._file_offset = file_offset
@@ -123,7 +114,23 @@ class FileContentWindow(ContentWindow):
             self.start_offset, self._size, id(self._handle), self._file_offset)
 
 class FileBuffer(object):
-    ''' The file buffer class. '''
+    '''
+    The file buffer class.
+
+    It implements large file support by dividing the file into dynamic ranges
+    (windows). By default, the whole file is represented by one big content window
+    that uses the underlying file to look up things.
+
+    Editing the file, rather than operating on the HDD or placing the whole thing
+    into the RAM, manipulates those content windows. When the user enters a text,
+    the buffer splits existing content windows and introduces a new window that
+    holds the text supplied by the user in the RAM.
+
+    When the UI requests the file buffer to provide content at specific offset and
+    of specific size, the file buffer "compiles" the final output by iterating over
+    the relevant windows.
+    '''
+
     def __init__(self, path=None):
         if not path:
             self._windows = []

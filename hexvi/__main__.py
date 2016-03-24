@@ -1,4 +1,9 @@
 #!/bin/python3
+
+'''
+The CLI facade. Argument parsing and core lifetime management goes here.
+'''
+
 import argparse
 import os
 import hexvi.events as events
@@ -29,7 +34,7 @@ def main():
     tab_manager = TabManager(app_state)
     cmd_processor = CommandProcessor(app_state, tab_manager)
 
-    ui = Ui(tab_manager, cmd_processor, app_state)
+    user_interface = Ui(tab_manager, cmd_processor, app_state)
 
     # initial configuration
     cmd_processor.exec(
@@ -49,8 +54,7 @@ def main():
     if anything_printed:
         input('Press Enter to continue...')
 
-    # run
-    ui.run()
+    user_interface.run()
 
 if __name__ == '__main__':
     main()

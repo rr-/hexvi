@@ -1,6 +1,4 @@
-'''
-Command registry, where all commands are registered in.
-'''
+''' Exports CommandRegistry and few base command classes. '''
 
 class CommandRegistry(object):
     ''' The container for all commands. '''
@@ -20,7 +18,7 @@ class CommandRegistry(object):
 class BaseCommandMeta(type):
     '''
     Meta class for the BaseCommand that autoregisters the command in the
-    registry.
+    registry upon importing the module it's declared in.
     '''
     def __init__(cls, name, bases, properties):
         super().__init__(name, bases, properties)
@@ -30,9 +28,8 @@ class BaseCommandMeta(type):
 class BaseCommand(metaclass=BaseCommandMeta):
     '''
     Base command that all commands are supposed to derive from.
-    Automatically registers given command in the registry.
+    Automatically registers given command in the registry via own metaclass.
     '''
-
     names = []
 
     def __init__(self, app_state, command_processor, tab_manager):

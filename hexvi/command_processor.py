@@ -1,6 +1,4 @@
-'''
-Command processor - the thing that executes all the commands in hexvi.
-'''
+''' Exports CommandProcessor. '''
 
 import shlex
 import regex
@@ -10,7 +8,13 @@ import hexvi.commands
 from hexvi.command_registry import CommandRegistry
 from hexvi.app_state import AppState
 
+hexvi.commands.discover_commands()
+
 class CommandProcessor(object):
+    '''
+    Command processor - the thing that executes all the commands in hexvi.
+    '''
+
     def __init__(self, app_state, tab_manager):
         self._tab_manager = tab_manager
         self._app_state = app_state

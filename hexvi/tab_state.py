@@ -1,13 +1,15 @@
-'''
-Tab state, i.e. one widget for the file buffer.
-Contains visual information on the file (such as currently selected offset
-etc.), and link to the file buffer.
-'''
+''' Exports TabState. '''
 
 import hexvi.events as events
 from hexvi.file_buffer import FileBuffer
 
 class TabState(object):
+    '''
+    Tab state, i.e. one widget for the file buffer.
+    Contains visual information on the file (such as currently selected offset
+    etc.), and link to the file buffer.
+    '''
+
     PANE_HEX = 'hex'
     PANE_ASC = 'asc'
 

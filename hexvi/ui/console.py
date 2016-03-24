@@ -1,4 +1,4 @@
-''' The console widget. '''
+''' Exports Console. '''
 
 from hexvi.app_state import AppState
 from hexvi.ui.readline_edit import ReadlineEdit
