@@ -1,5 +1,6 @@
 ''' Miscellaneous utilities '''
 
+import os.path
 from hexvi.app_state import SearchState
 
 def scan_file(file_buffer, direction, start_pos, buffer_size, jump_size, functor):
@@ -43,3 +44,15 @@ def trim_left(text, size):
     if len(text) <= size:
         return text
     return ellipsis + text[len(ellipsis)+len(text)-size:]
+
+def filter_unique_paths(paths):
+    result = []
+    for i, path in enumerate(paths):
+        same = False
+        for j, other_path in enumerate(paths[i+1:]):
+            if os.path.samefile(path, other_path):
+                same = True
+                break
+        if not same:
+            result.append(path)
+    return result

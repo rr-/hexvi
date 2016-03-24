@@ -7,6 +7,7 @@ The CLI facade. Argument parsing and core lifetime management goes here.
 import argparse
 import os
 import hexvi.events as events
+import hexvi.util as util
 from hexvi.app_state import AppState
 from hexvi.command_processor import CommandProcessor
 from hexvi.tab_manager import TabManager
@@ -16,7 +17,8 @@ from hexvi.ui import Ui
 def parse_args():
     parser = argparse.ArgumentParser(
         description='hexvi - a hex editor inspired by Vim.')
-    parser.add_argument(metavar='FILE', dest='file', help='file to edit')
+    parser.add_argument(
+        metavar='FILE', nargs='*', dest='paths', help='files to edit')
     return parser.parse_args()
 
 def main():
@@ -43,11 +45,15 @@ def main():
         if os.path.exists(os.path.expanduser(path)):
             cmd_processor.exec('source', path)
 
-    try:
-        tab_manager.open_tab(args.file)
-    except Exception as ex:
+    paths = util.filter_unique_paths(args.paths)
+    for path in paths:
+        try:
+            tab_manager.open_tab(path)
+        except Exception as ex:
+            events.notify(events.PrintMessage(str(ex), style='msg-error'))
+    if not tab_manager.tabs:
         tab_manager.open_tab()
-        events.notify(events.PrintMessage(str(ex), style='msg-error'))
+    tab_manager.tab_index = 0
 
     # print collected messages, if any
     events.unregister_handler(events.PrintMessage, print_message_handler)
