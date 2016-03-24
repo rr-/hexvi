@@ -70,7 +70,6 @@ Note:
 ### Planned features
 
 - File saving (`:w`, `:w PATH`)
-- `:qa`
 - Warning if file content was unsaved before closing
 - `:w!`, `:w! path`, `:e! path`
 - Undo/redo

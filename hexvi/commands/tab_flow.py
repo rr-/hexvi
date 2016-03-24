@@ -31,6 +31,14 @@ class CloseActiveTabCommand(BaseCommand):
     def run(self, _args):
         self._tab_manager.close_current_tab()
 
+class CloseActiveTabCommand(BaseCommand):
+    ''' Close all tabs. '''
+    names = ['qa', 'qall']
+
+    def run(self, _args):
+        while self._tab_manager.tabs:
+            self._tab_manager.close_current_tab()
+
 class TogglePaneCommand(BaseTabCommand):
     ''' Toggles the pane between hex and ascii dump. '''
     names = ['toggle_pane', 'toggle_panes']
