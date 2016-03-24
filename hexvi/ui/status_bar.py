@@ -27,7 +27,7 @@ class StatusBar(urwid.Widget):
 
         left = '[%s] ' % self._app_state.mode.upper()
         left += util.trim_left(
-            self._tab_manager.current_tab.name,
+            self._tab_manager.current_tab.long_name,
             size[0] - (len(right) + len(left) + 3))
 
         left_canvas = urwid.TextCanvas([left.encode('utf-8')])

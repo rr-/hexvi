@@ -1,5 +1,6 @@
 ''' Exports TabState. '''
 
+import os.path
 import hexvi.events as events
 from hexvi.file_buffer import FileBuffer
 
@@ -79,8 +80,17 @@ class TabState(object):
         self.top_offset = top_off
 
     @property
-    def name(self):
+    def long_name(self):
         return self.file_buffer.path or '[No Name]'
+
+    @property
+    def short_name(self):
+        if not self.file_buffer.path:
+            return '[No Name]'
+        file_name = os.path.basename(self.file_buffer.path)
+        if file_name != self.file_buffer.path:
+            return '(..)' + file_name
+        return file_name
 
     current_offset = property(get_current_offset, set_current_offset)
     top_offset = property(get_top_offset, set_top_offset)

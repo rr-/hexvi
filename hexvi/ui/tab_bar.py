@@ -2,6 +2,7 @@
 
 import urwid
 import hexvi.events as events
+from hexvi.ui.misc import Button
 
 class TabBar(urwid.Columns):
     ''' The thing that renders file tabs at the top of the window. '''
@@ -22,10 +23,10 @@ class TabBar(urwid.Columns):
             if i == self._tab_manager.tab_index:
                 class_name += '-focused'
             button = urwid.AttrWrap(
-                urwid.Button(
-                    tab.name, on_press=self._button_clicked, user_data=i),
+                Button(
+                    tab.short_name, on_press=self._button_clicked, user_data=i),
                 class_name)
-            options = self.options('given', len(tab.name) + 4)
+            options = self.options('given', len(tab.short_name))
             self.contents.append((button, options))
         self.focus_position = self._tab_manager.tab_index
 
