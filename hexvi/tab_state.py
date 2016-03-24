@@ -78,6 +78,10 @@ class TabState(object):
             top_off += vis_col * ((cur_off - bot_off) // vis_col + dis)
         self.top_offset = top_off
 
+    @property
+    def name(self):
+        return self.file_buffer.path or '[No Name]'
+
     current_offset = property(get_current_offset, set_current_offset)
     top_offset = property(get_top_offset, set_top_offset)
     bottom_offset = property(get_bottom_offset)

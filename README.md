@@ -65,11 +65,14 @@ Note:
     - <kbd>N</kbd>: jump to previous match
     - <kbd>*dec*</kbd><kbd>n</kbd>: jump to *dec*-th next match
     - <kbd>*dec*</kbd><kbd>N</kbd>: jump to *dec*-th previous match
+- Multiple buffers
 
 ### Planned features
 
-- File saving
-- Multiple buffers (via tabs)
+- Extended file opening (`:e PATH`)
+- File saving (`:w`, `:w PATH`, `:w!`, `:w! PATH`, `:wq`)
+- `:qa`
+- Warning if file content was unsaved before closing
 - Undo/redo
 - More movement commands (<kbd>t</kbd>, <kbd>f</kbd>, <kbd>T</kbd>,
   <kbd>F</kbd>)
@@ -82,6 +85,7 @@ Note:
 - Search and replace
 - Man page
 - Enhanced control over appearance
+    - Showing modification with tab color
 - More built-in color schemes
 
 ### Features not likely to be added

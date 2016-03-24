@@ -19,9 +19,6 @@ class Ui(object):
         events.register_handler(events.ProgramExit, lambda *args: self._exit())
         events.register_handler(events.ColorChange, self._color_changed)
 
-        # TODO: subscribe to changes of app_state.current_tab
-        self._main_window.caption = 'hexvi'
-
         self.loop = urwid.MainLoop(
             self._main_window, unhandled_input=self._key_pressed)
 

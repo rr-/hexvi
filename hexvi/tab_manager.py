@@ -9,12 +9,13 @@ class TabManager(object):
 
     def __init__(self, app_state):
         self.tabs = []
-        self._tab_idx = None
+        self._tab_index = None
         self._app_state = app_state
+        self._old_tab_id = None
 
     @property
     def current_tab(self):
-        return None if self._tab_idx is None else self.tabs[self._tab_idx]
+        return None if self._tab_index is None else self.tabs[self._tab_index]
 
     def close_current_tab(self):
         ''' Closes currently focused tab. '''
@@ -23,12 +24,12 @@ class TabManager(object):
 
     def _do_close_current_tab(self):
         events.notify(events.TabClose(self.current_tab))
-        self.tabs = self.tabs[:self._tab_idx] + self.tabs[self._tab_idx+1:]
+        self.tabs = self.tabs[:self._tab_index] + self.tabs[self._tab_index+1:]
         if not self.tabs:
             events.notify(events.ProgramExit())
+        elif self.tab_index >= len(self.tabs):
+            self.tab_index = len(self.tabs) - 1
         else:
-            if self._tab_idx >= len(self.tabs):
-                self._tab_idx = len(self.tabs) - 1
             events.notify(events.TabChange(self.current_tab))
 
     def open_tab(self, path=None):
@@ -38,12 +39,22 @@ class TabManager(object):
         else:
             new_tab = TabState(self._app_state)
         self.tabs.append(new_tab)
-        self._tab_idx = len(self.tabs) - 1
         events.notify(events.TabOpen(new_tab))
-        events.notify(events.TabChange(new_tab))
+        self.tab_index = len(self.tabs) - 1
 
     def cycle_tabs(self, direction):
         ''' Focuses next or previous tab. '''
-        self._tab_idx += 1 if direction == SearchState.DIR_FORWARD else -1
-        self._tab_idx %= len(self.tabs)
-        events.notify(events.TabChange(self.current_tab))
+        self.tab_index += 1 if direction == SearchState.DIR_FORWARD else -1
+
+    def get_tab_index(self):
+        return self._tab_index
+
+    def set_tab_index(self, new_tab_index):
+        if new_tab_index != self._tab_index:
+            self._tab_index = new_tab_index
+            self._tab_index %= len(self.tabs)
+        if self._old_tab_id != id(self.current_tab):
+            events.notify(events.TabChange(self.current_tab))
+            self._old_tab_id = id(self.current_tab)
+
+    tab_index = property(get_tab_index, set_tab_index)
