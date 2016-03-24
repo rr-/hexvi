@@ -50,7 +50,7 @@ def filter_unique_paths(paths):
     for i, path in enumerate(paths):
         same = False
         for j, other_path in enumerate(paths[i+1:]):
-            if os.path.samefile(path, other_path):
+            if other_path and os.path.samefile(path, other_path):
                 same = True
                 break
         if not same:
