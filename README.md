@@ -14,11 +14,14 @@ Note:
 *hex* denotes any valid hexadecimal number.
 
 - Opening and displaying a file :)
+- Multiple buffers (via tabs)
+- Editing same file in multiple buffers
 - Support for large files
-- Simple commands
-- Color schemes
+- Everything is a command
 - Simple installation via `setuptools`
-- Limited user configuration via `~/.config/hexvirc` and `~/.hexvirc`
+- User configuration via `~/.config/hexvirc` and `~/.hexvirc`
+    - Color schemes
+    - Customizable bindings (every binding directly corresponds to a command)
 - Flow
     - <kbd>Ctrl+W</kbd><kbd>Ctrl+W</kbd>, <kbd>Ctrl+W</kbd><kbd>W</kbd>, <kbd>Tab</kbd>: switch between hex and ASCII dump
     - <kbd>Ctrl+W</kbd><kbd>Ctrl+H</kbd>, <kbd>Ctrl+W</kbd><kbd>H</kbd>: switch to hex dump
@@ -49,6 +52,7 @@ Note:
     - <kbd>H</kbd>: jump to screen top
     - <kbd>M</kbd>: jump to screen middle
     - <kbd>L</kbd>: jump to screen bottom
+    - <kbd>*dec*</kbd><kbd>%</kbd>: jump to % of file
 - Test inserting (<kbd>i</kbd>, <kbd>a</kbd>)
 - Text replacing (<kbd>r</kbd>)
 - Text removal
@@ -57,6 +61,10 @@ Note:
     - <kbd>X</kbd>: remove character to the left
     - <kbd>*dec*</kbd><kbd>X</kbd>: remove *dec* characters to the left
     - <kbd>d</kbd> + all of the movement commands
+- Tab management
+    - <kbd>Ctrl+T</kbd>: open new tab
+    - <kbd>g</kbd><kbd>t</kbd>: next tab
+    - <kbd>g</kbd><kbd>T</kbd>: previous tab
 - Search
     - forward search via <kbd>/</kbd>
     - backward search via <kbd>?</kbd>
@@ -65,7 +73,6 @@ Note:
     - <kbd>N</kbd>: jump to previous match
     - <kbd>*dec*</kbd><kbd>n</kbd>: jump to *dec*-th next match
     - <kbd>*dec*</kbd><kbd>N</kbd>: jump to *dec*-th previous match
-- Multiple buffers
 
 ### Planned features
 
@@ -84,7 +91,7 @@ Note:
 - Search and replace
 - Man page
 - Enhanced control over appearance
-    - Showing modification with tab color
+    - Showing the file is modified with tab color
 - More built-in color schemes
 
 ### Features not likely to be added
