@@ -22,21 +22,25 @@ class TabManager(object):
         self._do_close_current_tab()
 
     def _do_close_current_tab(self):
+        events.notify(events.TabClose(self.current_tab))
         self.tabs = self.tabs[:self._tab_idx] + self.tabs[self._tab_idx+1:]
-        if self._tab_idx >= len(self.tabs):
-            self._tab_idx = len(self.tabs) - 1
         if not self.tabs:
             events.notify(events.ProgramExit())
-        events.notify(events.TabChange(self.current_tab))
+        else:
+            if self._tab_idx >= len(self.tabs):
+                self._tab_idx = len(self.tabs) - 1
+            events.notify(events.TabChange(self.current_tab))
 
     def open_tab(self, path=None):
         ''' Opens a new tab and focuses it. '''
         if path:
-            self.tabs.append(TabState(self._app_state, path))
+            new_tab = TabState(self._app_state, path)
         else:
-            self.tabs.append(TabState(self._app_state))
+            new_tab = TabState(self._app_state)
+        self.tabs.append(new_tab)
         self._tab_idx = len(self.tabs) - 1
-        events.notify(events.TabChange(self.current_tab))
+        events.notify(events.TabOpen(new_tab))
+        events.notify(events.TabChange(new_tab))
 
     def cycle_tabs(self, direction):
         ''' Focuses next or previous tab. '''

@@ -43,6 +43,8 @@ ConfirmMessage = namedtuple('ConfirmMessage', ['message', 'confirm_action', 'can
 
 ModeChange = namedtuple('ModeChange', ['mode'])
 
+TabOpen = namedtuple('TabOpen', ['tab_state'])
+TabClose = namedtuple('TabClose', ['tab_state'])
 TabChange = namedtuple('TabChange', ['tab_state'])
 
 WindowSizeChange = namedtuple('WindowSizeChange', ['size'])
