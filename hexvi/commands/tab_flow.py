@@ -2,7 +2,6 @@
 
 from hexvi.app_state import SearchState
 from hexvi.command_registry import BaseCommand, BaseTabCommand
-from hexvi.tab_state import TabState
 
 class OpenTabCommand(BaseTabCommand):
     ''' Opens a new tab. '''

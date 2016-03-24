@@ -1,8 +1,10 @@
 ''' Exports TabManager. '''
 
+import os.path
 import hexvi.events as events
 from hexvi.app_state import SearchState
 from hexvi.tab_state import TabState
+from hexvi.file_buffer import FileBuffer
 
 class TabManager(object):
     ''' The class responsible for managing tab lifecycles. '''
@@ -34,17 +36,16 @@ class TabManager(object):
 
     def open_tab(self, path=None):
         ''' Opens a new tab and focuses it. '''
-        if path:
-            new_tab = TabState(self._app_state, path)
-        else:
-            new_tab = TabState(self._app_state)
+        file_buffer = self._get_or_create_file_buffer(path)
+        new_tab = TabState(self._app_state, file_buffer)
         self.tabs.append(new_tab)
         events.notify(events.TabOpen(new_tab))
         self.tab_index = len(self.tabs) - 1
 
     def open_in_current_tab(self, path):
         ''' Opens a file in an existing focused tab. '''
-        new_tab = TabState(self._app_state, path)
+        file_buffer = self._get_or_create_file_buffer(path)
+        new_tab = TabState(self._app_state, file_buffer)
         self.tabs[self.tab_index] = new_tab
         events.notify(events.TabChange(self.current_tab))
 
@@ -62,5 +63,14 @@ class TabManager(object):
         if self._old_tab_id != id(self.current_tab):
             events.notify(events.TabChange(self.current_tab))
             self._old_tab_id = id(self.current_tab)
+
+    def _get_or_create_file_buffer(self, path):
+        ''' If the file is already opened in some tab, share file buffer. '''
+        if not path:
+            return FileBuffer()
+        for tab in self.tabs:
+            if os.path.samefile(tab.file_buffer.path, path):
+                return tab.file_buffer
+        return FileBuffer(path)
 
     tab_index = property(get_tab_index, set_tab_index)

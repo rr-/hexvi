@@ -2,7 +2,6 @@
 
 import os.path
 import hexvi.events as events
-from hexvi.file_buffer import FileBuffer
 
 class TabState(object):
     '''
@@ -14,8 +13,8 @@ class TabState(object):
     PANE_HEX = 'hex'
     PANE_ASC = 'asc'
 
-    def __init__(self, app_state, file_path=None):
-        self.file_buffer = FileBuffer(file_path)
+    def __init__(self, app_state, file_buffer):
+        self.file_buffer = file_buffer
         self._app_state = app_state
         self._pane = self.PANE_HEX
         self._top_offset = 0
@@ -23,6 +22,10 @@ class TabState(object):
         self._window_size = app_state.window_size
         self._offset_digits = 0
         events.register_handler(events.WindowSizeChange, self.window_size_changed)
+
+    def validate_offsets(self):
+        self._top_offset = min(self.file_buffer.size, self._top_offset)
+        self._cur_offset = min(self.file_buffer.size, self._cur_offset)
 
     def get_offset_digits(self):
         return self._offset_digits

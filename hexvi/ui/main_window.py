@@ -1,6 +1,5 @@
 ''' Exports MainWindow. '''
 
-import regex
 import urwid
 import hexvi.events as events
 from hexvi.app_state import AppState

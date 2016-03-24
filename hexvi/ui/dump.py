@@ -27,6 +27,7 @@ class Dump(urwid.BoxWidget):
 
     def _tab_changed(self, evt):
         self.tab_state = evt.tab_state
+        self.tab_state.validate_offsets()
         self._invalidate()
 
     def get_offset_digits(self):
