@@ -69,10 +69,10 @@ Note:
 
 ### Planned features
 
-- Extended file opening (`:e PATH`)
-- File saving (`:w`, `:w PATH`, `:w!`, `:w! PATH`, `:wq`)
+- File saving (`:w`, `:w PATH`)
 - `:qa`
 - Warning if file content was unsaved before closing
+- `:w!`, `:w! path`, `:e! path`
 - Undo/redo
 - More movement commands (<kbd>t</kbd>, <kbd>f</kbd>, <kbd>T</kbd>,
   <kbd>F</kbd>)

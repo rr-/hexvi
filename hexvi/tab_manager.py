@@ -42,6 +42,12 @@ class TabManager(object):
         events.notify(events.TabOpen(new_tab))
         self.tab_index = len(self.tabs) - 1
 
+    def open_in_current_tab(self, path):
+        ''' Opens a file in an existing focused tab. '''
+        new_tab = TabState(self._app_state, path)
+        self.tabs[self.tab_index] = new_tab
+        events.notify(events.TabChange(self.current_tab))
+
     def cycle_tabs(self, direction):
         ''' Focuses next or previous tab. '''
         self.tab_index += 1 if direction == SearchState.DIR_FORWARD else -1

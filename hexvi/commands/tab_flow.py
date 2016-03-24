@@ -2,6 +2,7 @@
 
 from hexvi.app_state import SearchState
 from hexvi.command_registry import BaseCommand, BaseTabCommand
+from hexvi.tab_state import TabState
 
 class OpenTabCommand(BaseTabCommand):
     ''' Opens a new tab. '''
@@ -53,3 +54,11 @@ class SetPaneCommand(BaseTabCommand):
             self.current_tab.pane = self.current_tab.PANE_ASC
         else:
             raise RuntimeError('Bad pane (try with "hex" or "ascii")')
+
+class OpenFileCommand(BaseTabCommand):
+    ''' Opens a file located on HDD. '''
+    names = ['e', 'edit']
+
+    def run(self, args):
+        path = args[0]
+        self._tab_manager.open_in_current_tab(path)
