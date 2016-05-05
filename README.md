@@ -13,7 +13,7 @@ Note:
 *dec* denotes any valid decimal number.  
 *hex* denotes any valid hexadecimal number.
 
-- Opening and displaying a file :)
+- Opening, displaying and saving files
 - Multiple buffers (via tabs)
 - Editing same file in multiple buffers
 - Support for large files
@@ -76,9 +76,8 @@ Note:
 
 ### Planned features
 
-- File saving (`:w`, `:w PATH`)
 - Warning if file content was unsaved before closing
-- `:w!`, `:w! path`, `:e! path`
+- `:e! path`
 - Undo/redo
 - More movement commands (<kbd>t</kbd>, <kbd>f</kbd>, <kbd>T</kbd>,
   <kbd>F</kbd>)

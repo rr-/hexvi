@@ -1,7 +1,21 @@
 ''' Commands related to tab management '''
 
+import os
 from hexvi.app_state import SearchState
 from hexvi.command_registry import BaseCommand, BaseTabCommand
+
+def _save(tab_manager, args, overwrite):
+    if not tab_manager.current_tab:
+        raise RuntimeError('No tab opened')
+    filebuf = tab_manager.current_tab.file_buffer
+    path = None
+    if len(args):
+        path = os.path.expanduser(args[0])
+    if not path:
+        path = filebuf.path
+    if not path:
+        raise RuntimeError('Need path')
+    filebuf.save_to_file(path, overwrite)
 
 class OpenTabCommand(BaseTabCommand):
     ''' Opens a new tab. '''
@@ -69,3 +83,17 @@ class OpenFileCommand(BaseTabCommand):
     def run(self, args):
         path = args[0]
         self._tab_manager.open_in_current_tab(path)
+
+class SaveFileCommand(BaseTabCommand):
+    ''' Saves a file to a location on HDD bailing out if it exists. '''
+    names = ['w', 'write']
+
+    def run(self, args):
+        _save(self._tab_manager, args, overwrite=False)
+
+class ForceSaveFileCommand(BaseTabCommand):
+    ''' Saves a file to a location on HDD overwriting it if it exists. '''
+    names = ['w!', 'write!']
+
+    def run(self, args):
+        _save(self._tab_manager, args, overwrite=True)

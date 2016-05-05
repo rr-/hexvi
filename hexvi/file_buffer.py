@@ -4,6 +4,7 @@ The extra Window classes should be considered implementation details.
 '''
 
 import os
+import shutil
 
 class Window(object):
     ''' Represents a range, which has size and offset. '''
@@ -282,6 +283,24 @@ class FileBuffer(object):
     def get_size(self):
         ''' Returns the file size. '''
         return sum(window.size for window in self._windows)
+
+    def save_to_file(self, target_path, overwrite):
+        assert target_path
+        buffer_size = 8192
+        size = self.size
+        saving_to_itself = os.path.exists(target_path) \
+            and os.path.samefile(target_path, self.path)
+        if not overwrite and os.path.exists(target_path) \
+                and not saving_to_itself:
+            raise RuntimeError(
+                ('File %r already exists, use :w! to overwrite' % target_path))
+        temporary_path = target_path + '.hexvi-tmp'
+        with open(temporary_path, 'wb') as handle:
+            for offset in range(0, size, buffer_size):
+                handle.write(self.get(offset, min(buffer_size, size - offset)))
+        shutil.move(temporary_path, target_path)
+        if saving_to_itself:
+            self._handle = open(target_path, 'rb')
 
     size = property(get_size)
     path = property(get_path)
