@@ -10,6 +10,16 @@ from hexvi.app_state import AppState
 
 hexvi.commands.discover_commands()
 
+def handle_errors(func):
+    def wrapper(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        except urwid.ExitMainLoop:
+            raise
+        except Exception as ex:
+            events.notify(events.PrintMessage(str(ex), style='msg-error'))
+    return wrapper
+
 class CommandProcessor(object):
     '''
     Command processor - the thing that executes all the commands in hexvi.
@@ -21,6 +31,7 @@ class CommandProcessor(object):
         self._commands = CommandRegistry.create_commands(
             app_state, self, tab_manager)
 
+    @handle_errors
     def accept_raw_command_input(self, text):
         ''' Fired when the user runs a command in the UI command bar. '''
         mode = self._app_state.mode
@@ -34,6 +45,7 @@ class CommandProcessor(object):
         else:
             raise NotImplementedError(text)
 
+    @handle_errors
     def accept_raw_byte_input(self, byte):
         ''' Fired when the user enters a byte in either HEX or ASCII dump. '''
         current_tab = self._tab_manager.current_tab
@@ -48,18 +60,18 @@ class CommandProcessor(object):
         else:
             raise NotImplementedError()
 
+    @handle_errors
     def exec_raw(self, command_text):
         for chunk in regex.split(r'(?<!\\)\|', command_text):
-            command, *args = shlex.split(chunk)
+            try:
+                command, *args = shlex.split(chunk)
+            except ValueError:
+                raise RuntimeError('Malformed command')
             self.exec(command, *args)
 
+    @handle_errors
     def exec(self, command_name, *args):
-        try:
             for command in self._commands:
                 if command_name in command.names:
                     return command.run(args)
             raise RuntimeError('Unknown command: ' + command_name)
-        except urwid.ExitMainLoop:
-            raise
-        except Exception as ex:
-            events.notify(events.PrintMessage(str(ex), style='msg-error'))
