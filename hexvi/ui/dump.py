@@ -31,7 +31,8 @@ class Dump(urwid.BoxWidget):
         self._invalidate()
 
     def get_offset_digits(self):
-        return max(4, math.ceil(math.log(max(1, self.tab_state.size), 16)))
+        actual_digits = math.ceil(math.log(max(1, self.tab_state.size), 16))
+        return max(8, math.ceil(actual_digits / 4) * 4)
 
     def render(self, size, focus=False):
         if self.tab_state is None:

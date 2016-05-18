@@ -1,7 +1,18 @@
 ''' Miscellaneous utilities '''
 
 import os.path
+import re
 from hexvi.app_state import SearchState
+
+def fmt_hex(number):
+    alpha = list('0123456789ABCDEF')
+    ret = ''
+    while number > 0:
+        ret = alpha[number % 16] + ret
+        number //= 16
+    while len(ret) % 4 != 0 or not ret:
+        ret = '0' + ret
+    return ret
 
 def scan_file(file_buffer, direction, start_pos, buffer_size, jump_size, functor):
     '''

@@ -4,6 +4,14 @@ import urwid
 import hexvi.events as events
 import hexvi.util as util
 
+def _hilight(text):
+    hilight = [('status-off', 1) for i in range(len(text))]
+    for pos_x in range(len(text)):
+        if text[pos_x:pos_x+1] != '0':
+            break
+        hilight[pos_x] = ('status-off0', 1)
+    return hilight
+
 class StatusBar(urwid.Widget):
     ''' The thing that renders file size etc. at the bottom of the window. '''
 
@@ -19,20 +27,38 @@ class StatusBar(urwid.Widget):
         return 1
 
     def render(self, size, focus=False):
-        right = '0x%X / 0x%X (%d%%)' % (
-            self._tab_manager.current_tab.current_offset,
-            self._tab_manager.current_tab.size,
+        off_sep = ' / '
+        off1 = util.fmt_hex(self._tab_manager.current_tab.current_offset)
+        off2 = util.fmt_hex(self._tab_manager.current_tab.size)
+        percent = ' (%d%%)' % (
             self._tab_manager.current_tab.current_offset * (
                 100.0 / max(1, self._tab_manager.current_tab.size)))
 
+        right_size = len(off1) + len(off2) + len(off_sep) + len(percent)
         left = '[%s] ' % self._app_state.mode.upper()
         left += util.trim_left(
             self._tab_manager.current_tab.long_name,
-            size[0] - (len(right) + len(left) + 3))
+            size[0] - (right_size + len(left) + 3))
 
-        left_canvas = urwid.TextCanvas([left.encode('utf-8')])
-        right_canvas = urwid.TextCanvas([right.encode('utf-8')])
         composite_canvas = urwid.CanvasJoin([
-            (left_canvas, None, False, size[0] - len(right)),
-            (right_canvas, None, False, len(right))])
+            (
+                urwid.TextCanvas([left.encode('utf-8')]),
+                None, False, size[0] - right_size,
+            ),
+            (
+                urwid.TextCanvas([off1.encode('utf-8')], [_hilight(off1)]),
+                None, False, len(off1),
+            ),
+            (
+                urwid.TextCanvas([off_sep.encode('utf-8')]),
+                None, False, len(off_sep),
+            ),
+            (
+                urwid.TextCanvas([off2.encode('utf-8')], [_hilight(off2)]),
+                None, False, len(off2),
+            ),
+            (
+                urwid.TextCanvas([percent.encode('utf-8')]),
+                None, False, len(percent),
+            )])
         return composite_canvas
