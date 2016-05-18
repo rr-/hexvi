@@ -69,7 +69,9 @@ class TabManager(object):
         if not path:
             return FileBuffer()
         for tab in self.tabs:
-            if os.path.samefile(tab.file_buffer.path, path):
+            if tab.file_buffer.path \
+                    and path \
+                    and os.path.samefile(tab.file_buffer.path, path):
                 return tab.file_buffer
         return FileBuffer(path)
 
