@@ -30,8 +30,8 @@ class _BaseSearchCommand(BaseTabCommand):
                 self.current_tab.file_buffer,
                 direction,
                 start_pos,
-                max_match_size,
                 max_match_size * 2,
+                max_match_size,
                 lambda buffer, start_pos, end_pos, direction: \
                     self._search_callback(pattern, buffer, start_pos)):
             # TODO: if an option is enabled, show info and wrap around
