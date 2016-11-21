@@ -7,11 +7,11 @@ from hexvi.io.disk_content_range import DiskContentRange
 from typing import Optional, List, Any
 
 
-'''
-The class maintains continuous sequence of ContentRanges to describe
-the file content.
-'''
 class IOBuffer:
+    '''
+    The class maintains continuous sequence of ContentRanges to describe
+    the file content.
+    '''
     def __init__(self, path: Optional[str]=None) -> None:
         if not path:
             self._content_ranges = []  # type: List[ContentRange]
@@ -119,8 +119,12 @@ class IOBuffer:
                 left -= to_get
             if not left:
                 break
-        assert len(buffer) == size
         return buffer
+
+    def read_bytes_trunc(self, offset: int, size: int) -> bytes:
+        if offset >= self.size:
+            return b''
+        return self.read_bytes(offset, min(self.size, offset + size) - offset)
 
     def save_to_file(self, target_path: str, overwrite: bool) -> None:
         assert target_path

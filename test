@@ -1,0 +1,4 @@
+#!/bin/sh
+mypy hexvi --disallow-untyped-defs --strict-optional --silent-imports
+pytest hexvi --cov-report=term-missing --cov
+pycodestyle hexvi
